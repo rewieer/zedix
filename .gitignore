@@ -1,0 +1,11 @@
+.idea/
+.vscode/
+node_modules/
+build/
+tmp/
+temp/
+config/parameters.ts
+config/firebase.json
+var/logs/*.log
+.DS_Store
+dist/
