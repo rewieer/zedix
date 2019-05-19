@@ -8,6 +8,9 @@
     "build": "tsc",
     "pretty": "prettier --write \"src/**/*.ts\""
   },
+  "bin": {
+    "zedix": "./bin/scripts.js"
+  },
   "dependencies": {
     "@types/chalk": "^2.2.0",
     "@types/express": "^4.16.1",
