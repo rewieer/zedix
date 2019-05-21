@@ -10,6 +10,10 @@ Features :
 * nodemailer
 * winston for logging
 
+### Walkthrough
+To get a good grasp at Zedix, start by looking at [the walkthrough](docs/walkthrough.md). It will guide you
+through your journey. Zedix is pretty small, so it wont take more than 20 minutes to get along !
+
 ### Get started
 
 ```
