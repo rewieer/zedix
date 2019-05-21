@@ -17,7 +17,7 @@ through your journey. Zedix is pretty small, so it wont take more than 20 minute
 ### Get started
 
 ```
-yarn global add zedix
+yarn global add zedix-cli
 zedix init --name MyProject
 cd MyProject
 ```
@@ -25,7 +25,7 @@ cd MyProject
 Or
 
 ```
-npm i zedix -g
+npm i zedix-cli -g
 zedix init --name MyProject
 cd MyProject
 ```

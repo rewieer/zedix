@@ -11,7 +11,7 @@ a GraphQL setup, and TypeORM as your ORM. It works with Typescript by default.
 ## Installation
 Let's get started by installing the package globally.
 
-`npm i -g zedix`
+`npm i -g zedix-cli`
 
 From this point, the CLI is installed and you can now create a new project.
 
