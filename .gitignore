@@ -3,3 +3,4 @@
 .DS_Store
 packages/cli/node_modules
 packages/core/node_modules
+packages/core/dist
