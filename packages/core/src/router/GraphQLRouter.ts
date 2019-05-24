@@ -2,7 +2,7 @@ import * as express from "express";
 import * as glob from "glob";
 
 import { mergeTypes } from "merge-graphql-schemas";
-import { ApolloServer, SchemaDirectiveVisitor } from "apollo-server-express";
+import { ApolloServer, Config } from "apollo-server-express";
 
 import RouterInterface from "../interface/RouterInterface";
 import { Metadata } from "../core/MetadataCollector";
@@ -31,30 +31,35 @@ class LogExtension<TContext = any> implements GraphQLExtension<TContext> {
       unit = "s";
     }
 
-    const loggedQuery = options.queryString || print(options.parsedQuery);
+    // In case we want to know the query that failed : const loggedQuery = options.queryString || print(options.parsedQuery);
     this.logger.info(`GraphQL Request ${elapsedTime}${unit} `);
     if (options.graphqlResponse.errors) {
-      options.graphqlResponse.errors.forEach((err: Error) => {
-        this.logger.error(err.stack);
+      options.graphqlResponse.errors.forEach(err => {
+        let stack = err.stack;
+        if (!stack && err.extensions) {
+          stack = err.extensions.exception.stacktrace.join("\n");
+        }
+
+        this.logger.error(stack);
       });
     }
   }
 }
 
+type RouterConfig = Config & {
+  schemaPath: string;
+  types?: { [key: string]: GraphQLScalarType };
+};
+
 class GraphQLRouter implements RouterInterface {
   private queries = [];
   private mutations = [];
   private fields = {};
-  private types: { [key: string]: GraphQLScalarType };
   private typedefs = [];
   private server: ApolloServer;
-  private directives: Record<string, typeof SchemaDirectiveVisitor> = {};
+  private config: RouterConfig;
 
-  constructor(conf: {
-    schemaPath: string;
-    directives?: Record<string, typeof SchemaDirectiveVisitor>;
-    types?: { [key: string]: GraphQLScalarType };
-  }) {
+  constructor(conf: RouterConfig) {
     // Automatically load the schemas in the path
     const files = glob.sync(conf.schemaPath + "/**/*.ts");
     for (let path of files) {
@@ -63,8 +68,7 @@ class GraphQLRouter implements RouterInterface {
         this.typedefs.push(require(path).default);
     }
 
-    this.directives = conf.directives;
-    this.types = conf.types || {};
+    this.config = conf;
   }
 
   receiveMetadata(instance: object, metadata: Metadata[]) {
@@ -93,17 +97,28 @@ class GraphQLRouter implements RouterInterface {
   }
 
   integrate(app: express.Application, helpers: AppHelpers) {
-    this.server = new ApolloServer({
-      // @ts-ignore
-      typeDefs: mergeTypes(this.typedefs, { all: true }),
-      resolvers: this.buildResolvers(),
-      schemaDirectives: this.directives,
-      extensions: [() => new LogExtension(helpers.getLogger())],
-      context: ({ res }) => {
-        return res.locals.app;
-      }
-    });
+    const logExtensionFactory = () => new LogExtension(helpers.getLogger());
+    const getAppFromContext = ({ res }) => {
+      return res.locals.app;
+    };
 
+    const conf = this.config;
+
+    if (conf.context) {
+      console.warn(
+        "Providing a context prop to the GraphQLRouter is not supported yet."
+      );
+    }
+
+    // @ts-ignore
+    conf.typeDefs = mergeTypes(this.typedefs, { all: true });
+    conf.resolvers = this.buildResolvers();
+    conf.extensions = conf.extensions
+      ? [...conf.extensions, logExtensionFactory]
+      : [logExtensionFactory];
+    conf.context = getAppFromContext;
+
+    this.server = new ApolloServer(conf);
     this.server.applyMiddleware({
       app
     });
@@ -139,7 +154,7 @@ class GraphQLRouter implements RouterInterface {
       };
     });
 
-    let resolvers : any = {};
+    let resolvers: any = {};
     if (this.queries.length > 0) {
       resolvers.Query = queryHandlers;
     }
@@ -152,7 +167,7 @@ class GraphQLRouter implements RouterInterface {
       resolvers = {
         ...resolvers,
         ...types
-      }
+      };
     }
 
     return resolvers;
@@ -188,7 +203,7 @@ class GraphQLRouter implements RouterInterface {
 
     return {
       ...types,
-      ...this.types
+      ...this.config.types
     };
   }
 

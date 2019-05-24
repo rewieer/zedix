@@ -24,7 +24,6 @@ class Mailer extends BaseService {
   getName(): string {
     return "Mailer";
   }
-
 }
 
 export default Mailer;

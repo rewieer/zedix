@@ -1,13 +1,9 @@
 import ServiceInterface from "../interface/ServiceInterface";
 
 export default abstract class BaseService implements ServiceInterface {
-  initialize() {
+  initialize() {}
 
-  }
-
-  integrate(app: Express.Application) {
-
-  }
+  integrate(app: Express.Application) {}
 
   abstract getName(): string;
 }

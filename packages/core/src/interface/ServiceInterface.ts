@@ -1,5 +1,5 @@
 interface ServiceInterface {
-  getName() : string;
+  getName(): string;
   initialize();
   integrate(app: Express.Application);
 }

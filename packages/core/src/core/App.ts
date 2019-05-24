@@ -13,9 +13,9 @@ import { AppHelpers, StringMap } from "../types";
 import ServiceInterface from "../interface/ServiceInterface";
 
 type ServiceClass = {
-  new (...args: any[]): ServiceInterface,
-  __zxcfgr__: (config: object) => any,
-}
+  new (...args: any[]): ServiceInterface;
+  __zxcfgr__: (config: object) => any;
+};
 
 type AppConfigureConf = {
   config: object;
@@ -88,7 +88,9 @@ class App {
 
       const instance = new service(...serviceConf);
       if (this.services[instance.getName()]) {
-        throw new Error("A service with name " + instance.getName() + " already exists.");
+        throw new Error(
+          "A service with name " + instance.getName() + " already exists."
+        );
       }
 
       this.services[instance.getName()] = instance;
@@ -136,7 +138,9 @@ class App {
 
   run(port: number) {
     this.app.listen(port, () => {
-      console.log(chalk.bold.yellowBright("Z> Server is running on port " + port));
+      console.log(
+        chalk.bold.yellowBright("Z> Server is running on port " + port)
+      );
     });
   }
 }

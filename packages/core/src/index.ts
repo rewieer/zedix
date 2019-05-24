@@ -10,9 +10,13 @@ export { default as Mutation } from "./decorator/Mutation";
 export { default as Query } from "./decorator/Query";
 export { default as Web } from "./decorator/Web";
 export { default as RequestContext } from "./core/RequestContext";
-export { default as ControllerInterface } from "./interface/ControllerInterface";
+export {
+  default as ControllerInterface
+} from "./interface/ControllerInterface";
 export { default as ServiceInterface } from "./interface/ServiceInterface";
-export { default as MiddlewareInterface } from "./interface/MiddlewareInterface";
+export {
+  default as MiddlewareInterface
+} from "./interface/MiddlewareInterface";
 export { default as RouterInterface } from "./interface/RouterInterface";
 export { default as BaseService } from "./service/BaseService";
 
