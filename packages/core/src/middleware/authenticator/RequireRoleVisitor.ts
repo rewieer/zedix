@@ -10,8 +10,10 @@ import {
  * Ensure the user has the role
  */
 export const createRequireRoleVisitor = (config: {
-  getUser: (context: any) => any;
-  hasRole: (user: any, role: string) => boolean;
+  getUser: (context: any) => any
+  hasRole: (user: any, role: string) => boolean
+  unauthenticatedError: () => Error
+  authorizationError: () => Error
 }): typeof SchemaDirectiveVisitor => {
   return class extends SchemaDirectiveVisitor {
     visitFieldDefinition(
@@ -22,10 +24,12 @@ export const createRequireRoleVisitor = (config: {
 
       field.resolve = (root, args, context, info) => {
         const user = config.getUser(context);
-        if (!user) return null;
+        if (!user) {
+          throw config.unauthenticatedError();
+        }
 
         if (!config.hasRole(user, this.args.role)) {
-          return null;
+          throw config.authorizationError();
         }
 
         return resolve.call(this, root, args, context, info);
