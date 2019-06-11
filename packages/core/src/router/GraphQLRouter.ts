@@ -35,12 +35,15 @@ class LogExtension<TContext = any> implements GraphQLExtension<TContext> {
     this.logger.info(`GraphQL Request ${elapsedTime}${unit} `);
     if (options.graphqlResponse.errors) {
       options.graphqlResponse.errors.forEach(err => {
+        let path = err.path ? err.path.join(" / ") : "Unknown Path";
         let stack = err.stack;
-        if (!stack && err.extensions) {
+        if (!stack && err.extensions && err.extensions.exception && err.extensions.exception.stacktrace) {
           stack = err.extensions.exception.stacktrace.join("\n");
         }
-
-        this.logger.error(stack);
+        if (!stack) {
+          stack = err.message;
+        }
+        this.logger.error(path + " : " + stack);
       });
     }
   }
