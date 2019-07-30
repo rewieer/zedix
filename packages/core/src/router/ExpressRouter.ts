@@ -91,10 +91,8 @@ class ExpressRouter implements RouterInterface {
           params.push(req.query);
         }
 
-        // We provide the app as a last parameter to the stack
-        if (res.locals.app) {
-          params.push(res.locals.app);
-        }
+        params.push(req);
+        params.push(res);
 
         logRequest(this.helpers.getLogger(), req, res);
         const result = await route.target[route.targetMethodName](...params);

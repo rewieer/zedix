@@ -104,17 +104,18 @@ it("should handle GET variables", async () => {
 
 it("should provide the locals", async () => {
   const app = express();
+  let lastReq = null;
   app.use((req, res, next) => {
-    res.locals.app = "This is a test app";
+    lastReq = req;
     next();
   });
 
   const router = new ExpressRouter();
 
   const instance = {
-    doAction: jest.fn((data, app) => {
+    doAction: jest.fn((data, req) => {
       expect(data).toEqual({});
-      expect(app).toEqual("This is a test app");
+      expect(req).toEqual(lastReq);
       return { name: "John Doe" };
     })
   };

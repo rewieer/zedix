@@ -42,7 +42,8 @@ class AuthenticatorBuilder {
   public toAuthenticatedDirective(): typeof SchemaDirectiveVisitor {
     return createAuthenticatedVisitor({
       isAuthenticated: isAuthenticatedFromContext,
-      unauthenticatedError: () => new AuthenticationError("You must be authenticated.")
+      unauthenticatedError: () =>
+        new AuthenticationError("You must be authenticated.")
     });
   }
 
@@ -50,8 +51,10 @@ class AuthenticatorBuilder {
     return createRequireRoleVisitor({
       getUser: getUserFromContext,
       hasRole: this.hasRole,
-      unauthenticatedError: () => new AuthenticationError("You must be authenticated."),
-      authorizationError: () => new Error("You must be authorized to access this data.")
+      unauthenticatedError: () =>
+        new AuthenticationError("You must be authenticated."),
+      authorizationError: () =>
+        new Error("You must be authorized to access this data.")
     });
   }
 }

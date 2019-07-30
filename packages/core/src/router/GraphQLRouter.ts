@@ -37,7 +37,12 @@ class LogExtension<TContext = any> implements GraphQLExtension<TContext> {
       options.graphqlResponse.errors.forEach(err => {
         let path = err.path ? err.path.join(" / ") : "Unknown Path";
         let stack = err.stack;
-        if (!stack && err.extensions && err.extensions.exception && err.extensions.exception.stacktrace) {
+        if (
+          !stack &&
+          err.extensions &&
+          err.extensions.exception &&
+          err.extensions.exception.stacktrace
+        ) {
           stack = err.extensions.exception.stacktrace.join("\n");
         }
         if (!stack) {
