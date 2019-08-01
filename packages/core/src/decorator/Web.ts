@@ -4,6 +4,7 @@ export interface WebMetata extends Metadata {
   name: string;
   path: string;
   method: string;
+  raw?: boolean;
 }
 
 /**
@@ -15,6 +16,7 @@ export default function Web(params: {
   name: string;
   path: string;
   method: string;
+  raw?: boolean;
 }) {
   return function(target, method) {
     MetadataCollector.add({
@@ -23,7 +25,8 @@ export default function Web(params: {
       methodName: method,
       name: params.name,
       path: params.path,
-      method: params.method
+      method: params.method,
+      raw: params.raw
     });
   };
 }

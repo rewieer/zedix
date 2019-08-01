@@ -2,6 +2,7 @@ import * as express from "express";
 import * as onFinished from "on-finished";
 import * as cors from "cors";
 import chalk from "chalk";
+import * as bodyParser from "body-parser";
 
 import RouterInterface from "../interface/RouterInterface";
 import { Metadata } from "../core/MetadataCollector";
@@ -16,6 +17,7 @@ type Route = {
   path: string;
   method: string;
   params: any[] | null;
+  raw: boolean;
 };
 
 type Config = {
@@ -52,7 +54,8 @@ class ExpressRouter implements RouterInterface {
           targetMethodName: metadata.methodName,
           path: metadata.path,
           method,
-          params
+          params,
+          raw: metadata.raw === true
         };
       }
     }
@@ -79,7 +82,11 @@ class ExpressRouter implements RouterInterface {
         );
       }
 
-      app[route.method](route.path, async (req, res) => {
+      const bodyParserMiddleware = route.raw
+        ? bodyParser.raw({ type: "application/json" })
+        : bodyParser.json({ limit: "10mb" });
+
+      app[route.method](route.path, bodyParserMiddleware, async (req, res) => {
         let params = [];
         if (route.method === "get" && route.params) {
           params = route.params.map(name => req.params[name]);

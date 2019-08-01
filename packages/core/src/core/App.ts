@@ -1,5 +1,4 @@
 import * as express from "express";
-import * as bodyParser from "body-parser";
 import chalk from "chalk";
 
 import ControllerInterface from "../interface/ControllerInterface";
@@ -45,7 +44,6 @@ class App {
     let _that = this;
 
     this.app = express();
-    this.app.use(bodyParser.json({ limit: "10mb" }));
     this.app.use(function(req: any, res, next) {
       if (_that !== null) {
         _that.url = req.protocol + "://" + req.get("host");
