@@ -10,7 +10,7 @@ class Templating extends BaseService {
     this.viewsPath = path.resolve(config.paths.views);
   }
 
-  integrate(app: express.Application) {
+  $integrate(app: express.Application) {
     app.set("view engine", "ejs");
   }
 
@@ -18,7 +18,7 @@ class Templating extends BaseService {
     return ejs.renderFile(path.resolve(this.viewsPath, filename), data);
   }
 
-  getName(): string {
+  $getName(): string {
     return "Templating";
   }
 }

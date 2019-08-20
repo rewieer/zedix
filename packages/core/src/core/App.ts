@@ -8,16 +8,19 @@ import MetadataCollector from "./MetadataCollector";
 import RequestContext from "./RequestContext";
 import MiddlewareInterface from "../interface/MiddlewareInterface";
 import LoggerInterface from "../service/LoggerInterface";
-import { AppHelpers, StringMap } from "../types";
+import { AppHelpers } from "../types";
 import ServiceInterface from "../interface/ServiceInterface";
 
-type ServiceClass = {
-  new (...args: any[]): ServiceInterface;
-  __zxcfgr__: (config: object) => any;
+export type ServiceClass<
+  TAppConfig extends object = {},
+  TConstructorConfig = any
+> = {
+  new (config: TConstructorConfig): ServiceInterface;
+  $getConfiguration?(config?: TAppConfig): TConstructorConfig;
 };
 
-type AppConfigureConf = {
-  config: object;
+type AppConfigureConf<TConfig extends object = {}> = {
+  config?: TConfig;
   logger: LoggerInterface;
   controllers: ControllerInterface[];
   routers: RouterInterface[];
@@ -32,22 +35,21 @@ type AppConfigureConf = {
  * Service custom fields :
  * __zxcfgr__ : configurator. If provided, the app calls it in order to instantiate the object.
  */
-class App {
-  public app: express.Application;
-  public services: StringMap<any> = {};
-  public routers: StringMap<any> = {};
+class App<TConfig extends object = {}> {
+  public server: express.Application;
+  public services: Record<string, ServiceInterface> = {};
+  public routers: RouterInterface[] = [];
   public logger: LoggerInterface;
 
   public url: string = null;
 
-  initialize() {
-    let _that = this;
+  private initialize() {
+    let instance = this;
 
-    this.app = express();
-    this.app.use(function(req: any, res, next) {
-      if (_that !== null) {
-        _that.url = req.protocol + "://" + req.get("host");
-        _that = null; // clear ref for G.C
+    this.server = express();
+    this.server.use(function(req: any, res, next) {
+      if (instance !== null) {
+        instance.url = req.protocol + "://" + req.get("host");
       }
 
       res.locals.app = new RequestContext();
@@ -62,11 +64,13 @@ class App {
   App => Authorization Handler => Router
    */
 
-  async configure(conf: AppConfigureConf) {
+  async configure(conf: AppConfigureConf<TConfig>) {
     this.services = {};
     this.routers = conf.routers.slice();
     this.logger = conf.logger;
     this.initialize();
+
+    const config = conf.config || {};
 
     // Create helpers so that services / middlewares can access App's public internals
     const helpers: AppHelpers = {
@@ -80,47 +84,47 @@ class App {
 
     // - Step 1 : load services and configure them
     for (let service of conf.services) {
-      let serviceConf = service.__zxcfgr__
-        ? service.__zxcfgr__(conf.config)
-        : [conf.config];
+      let serviceConf = service.$getConfiguration
+        ? service.$getConfiguration(config)
+        : [config];
 
-      const instance = new service(...serviceConf);
-      if (this.services[instance.getName()]) {
+      const instance = new service(serviceConf);
+      if (this.services[instance.$getName()]) {
         throw new Error(
-          "A service with name " + instance.getName() + " already exists."
+          "A service with name " + instance.$getName() + " already exists."
         );
       }
 
-      this.services[instance.getName()] = instance;
+      this.services[instance.$getName()] = instance;
     }
 
-    let curService;
+    let curService: ServiceInterface;
     for (let name of Object.keys(this.services)) {
       curService = this.services[name];
-      if (typeof curService.initialize === "function") {
-        await curService.initialize();
+      if (typeof curService.$initialize === "function") {
+        await curService.$initialize();
       }
-      if (typeof curService.integrate === "function") {
-        curService.integrate(this.app);
+      if (typeof curService.$integrate === "function") {
+        curService.$integrate(this.server);
       }
     }
 
     // - Step 2 : configure middlewares
     conf.middlewares.forEach(mdw => {
-      this.app.use((req, res, next) => {
+      this.server.use((req, res, next) => {
         mdw.handle(req, res.locals.app, next);
       });
     });
 
-    // - Step 3 : configure controllers
+    // - Step 3 : collect controllers metadata and configure them
     conf.controllers.forEach(obj => {
       const metadata = MetadataCollector.getMetadataForObject(obj);
-      conf.routers.forEach(router => router.receiveMetadata(obj, metadata));
+      conf.routers.forEach(router => router.$receiveMetadata(obj, metadata));
     });
 
     // - Step 4 : integrate routers with Express
     conf.routers.forEach(router => {
-      router.integrate(this.app, helpers);
+      router.$integrate(this.server, helpers);
     });
 
     return this;
@@ -130,12 +134,12 @@ class App {
     return this.services[name];
   }
 
-  getRouter(at: number) {
-    return this.routers[at];
+  getRouter(atIndex: number) {
+    return this.routers[atIndex];
   }
 
   run(port: number) {
-    this.app.listen(port, () => {
+    this.server.listen(port, () => {
       console.log(
         chalk.bold.yellowBright("Z> Server is running on port " + port)
       );
@@ -143,4 +147,5 @@ class App {
   }
 }
 
+export const AppClass = App;
 export default new App();

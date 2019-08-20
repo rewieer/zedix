@@ -69,7 +69,7 @@ class Logger extends BaseService implements LoggerInterface {
     this.logger.error(message);
   }
 
-  getName(): string {
+  $getName(): string {
     return "Logger";
   }
 }

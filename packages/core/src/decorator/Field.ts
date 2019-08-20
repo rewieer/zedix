@@ -1,4 +1,9 @@
-import MetadataCollector from "../core/MetadataCollector";
+import MetadataCollector, {Metadata} from "../core/MetadataCollector";
+
+export type FieldMetadata = Metadata<"field", {
+  entity: string
+  field: string
+}>
 
 /**
  * Represent a GraphQL Query
@@ -8,7 +13,7 @@ import MetadataCollector from "../core/MetadataCollector";
  */
 export default function Field(entity: string, field: string) {
   return function(target, method) {
-    MetadataCollector.add({
+    MetadataCollector.add<FieldMetadata>({
       type: "field",
       target: target.constructor,
       methodName: method,

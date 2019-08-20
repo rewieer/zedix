@@ -21,7 +21,7 @@ class Mailer extends BaseService {
     });
   }
 
-  getName(): string {
+  $getName(): string {
     return "Mailer";
   }
 }

@@ -1,4 +1,8 @@
-import MetadataCollector from "../core/MetadataCollector";
+import MetadataCollector, {Metadata} from "../core/MetadataCollector";
+
+export type QueryMetadata = Metadata<"query", {
+  name: string
+}>
 
 /**
  * Represent a GraphQL Query
@@ -7,7 +11,7 @@ import MetadataCollector from "../core/MetadataCollector";
  */
 export default function Query(name: string) {
   return function(target, method) {
-    MetadataCollector.add({
+    MetadataCollector.add<QueryMetadata>({
       type: "query",
       target: target.constructor,
       methodName: method,

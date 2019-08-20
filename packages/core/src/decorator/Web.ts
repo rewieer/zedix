@@ -1,11 +1,11 @@
 import MetadataCollector, { Metadata } from "../core/MetadataCollector";
 
-export interface WebMetata extends Metadata {
+export type WebMetadata = Metadata<"web", {
   name: string;
   path: string;
   method: string;
   raw?: boolean;
-}
+}>
 
 /**
  * Represent a Web Query
@@ -19,7 +19,7 @@ export default function Web(params: {
   raw?: boolean;
 }) {
   return function(target, method) {
-    MetadataCollector.add({
+    MetadataCollector.add<WebMetadata>({
       type: "web",
       target: target.constructor,
       methodName: method,

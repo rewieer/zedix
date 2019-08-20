@@ -79,7 +79,7 @@ class GraphQLRouter implements RouterInterface {
     this.config = conf;
   }
 
-  receiveMetadata(instance: object, metadata: Metadata[]) {
+  $receiveMetadata(instance: object, metadata: Metadata[]) {
     for (let data of metadata) {
       if (data.type === "query") {
         this.queries.push({
@@ -104,7 +104,7 @@ class GraphQLRouter implements RouterInterface {
     }
   }
 
-  integrate(app: express.Application, helpers: AppHelpers) {
+  $integrate(app: express.Application, helpers: AppHelpers) {
     const logExtensionFactory = () => new LogExtension(helpers.getLogger());
     const getAppFromContext = ({ res }) => {
       return res.locals.app;

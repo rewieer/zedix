@@ -14,4 +14,7 @@ module.exports = {
     "json",
     "node"
   ],
+  "unmockedModulePathPatterns": [
+    "/node_modules/ts-jest/.*"
+  ],
 };

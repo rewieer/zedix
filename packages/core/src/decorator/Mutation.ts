@@ -1,4 +1,8 @@
-import MetadataCollector from "../core/MetadataCollector";
+import MetadataCollector, {Metadata} from "../core/MetadataCollector";
+
+export type MutationMetadata = Metadata<"mutation", {
+  name: string
+}>
 
 /**
  * Represent a GraphQL mutation
@@ -7,7 +11,7 @@ import MetadataCollector from "../core/MetadataCollector";
  */
 export default function Mutation(name: string) {
   return function(target, method) {
-    MetadataCollector.add({
+    MetadataCollector.add<MutationMetadata>({
       type: "mutation",
       target: target.constructor,
       methodName: method,

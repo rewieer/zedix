@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "test": "jest",
-    "test-dev": "jest --watch",
+    "test:watch": "jest --watch",
     "build": "tsc",
     "pretty": "prettier --write \"src/**/*.ts\""
   },

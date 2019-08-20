@@ -1,9 +1,9 @@
-export type Metadata = {
-  type: string;
+export type Metadata<TType extends string = string, T extends object = {}> = {
+  type: TType;
   target: Function;
   methodName: string;
   [prop: string]: any;
-};
+} & T;
 
 /**
  * @class MetadataCollector
@@ -13,7 +13,7 @@ export type Metadata = {
 class MetadataCollector {
   metadata: Metadata[] = [];
 
-  add(data: Metadata) {
+  add<TMeta extends Metadata>(data: TMeta) {
     this.metadata.push(data);
   }
 

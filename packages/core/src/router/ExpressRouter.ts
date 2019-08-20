@@ -1,13 +1,15 @@
 import * as express from "express";
 import * as onFinished from "on-finished";
 import * as cors from "cors";
-import chalk from "chalk";
 import * as bodyParser from "body-parser";
+import { CorsOptions, CorsOptionsDelegate } from "cors";
+import chalk from "chalk";
 
 import RouterInterface from "../interface/RouterInterface";
-import { Metadata } from "../core/MetadataCollector";
 import { AppHelpers, StringMap } from "../types";
 import LoggerInterface from "../service/LoggerInterface";
+import {UnionMetadata} from "../decorator/decoratorTypes";
+import HookHelper from "../core/HookHelper";
 
 const argRegex = /:(\w*)/g;
 
@@ -22,11 +24,10 @@ type Route = {
 
 type Config = {
   spa?: string;
-  views: string;
-  public: string;
+  views?: string;
+  public?: string;
+  cors?: CorsOptions | CorsOptionsDelegate;
 };
-
-type RouterMetadata = Metadata & { name?: string };
 
 class ExpressRouter implements RouterInterface {
   private routes: StringMap<Route> = {};
@@ -37,7 +38,7 @@ class ExpressRouter implements RouterInterface {
     this.config = config || {};
   }
 
-  receiveMetadata(instance: object, data: RouterMetadata[]) {
+  $receiveMetadata(instance: object, data: UnionMetadata[]) {
     for (let metadata of data) {
       if (metadata.type === "web") {
         let params = null;
@@ -61,7 +62,7 @@ class ExpressRouter implements RouterInterface {
     }
   }
 
-  integrate(app: express.Application, helpers: AppHelpers) {
+  $integrate(app: express.Application, helpers: AppHelpers) {
     this.helpers = helpers;
 
     if (this.config.views) {
@@ -72,7 +73,7 @@ class ExpressRouter implements RouterInterface {
       app.use(express.static(this.config.public));
     }
 
-    app.use(cors());
+    app.use(cors(this.config.cors));
 
     Object.keys(this.routes).forEach(key => {
       const route = this.routes[key];
@@ -82,22 +83,26 @@ class ExpressRouter implements RouterInterface {
         );
       }
 
+      // TODO : refactor for more user power (too restrictive)
       const bodyParserMiddleware = route.raw
         ? bodyParser.raw({ type: "application/json" })
         : bodyParser.json({ limit: "10mb" });
 
       app[route.method](route.path, bodyParserMiddleware, async (req, res) => {
         let params = [];
+        let data;
         if (route.method === "get" && route.params) {
           params = route.params.map(name => req.params[name]);
         }
 
         if (route.method !== "get") {
-          params.push(req.body);
+          data = req.body;
         } else {
-          params.push(req.query);
+          data = req.query;
         }
 
+        data = HookHelper.passThrough("request", route.target, route.targetMethodName, data);
+        params.push(data);
         params.push(req);
         params.push(res);
 
@@ -106,8 +111,7 @@ class ExpressRouter implements RouterInterface {
         if (result) {
           // Currently we allow to render templates by returning a custom object
           // containing key __zxtpl__.
-          // TODO : provide parameters into the Web MetaData to determine wether it's
-          // returning an object or a rendering path
+          // TODO : provide parameters into the Web MetaData to determine wether it's returning an object or a rendering path
           if (result.__zxtpl__) {
             res.render(result.name, result.params);
             return;
@@ -133,13 +137,12 @@ class ExpressRouter implements RouterInterface {
       throw new Error("Cannot find route with name " + name);
     }
 
-    const out =
+    return (
       this.helpers.getURL() +
       Object.keys(params).reduce((accUrl, key) => {
         return accUrl.replace(":" + key, params[key]);
-      }, route.path);
-
-    return out;
+      }, route.path)
+    );
   }
 }
 

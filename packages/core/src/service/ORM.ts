@@ -1,9 +1,4 @@
-import {
-  Connection,
-  ConnectionOptions,
-  createConnection,
-  Repository
-} from "typeorm";
+import { Connection, ConnectionOptions, createConnection } from "typeorm";
 import BaseService from "./BaseService";
 
 class ORM extends BaseService {
@@ -23,7 +18,7 @@ class ORM extends BaseService {
     };
   }
 
-  async initialize() {
+  async $initialize() {
     this.connection = await createConnection(this.options);
   }
 
@@ -31,7 +26,7 @@ class ORM extends BaseService {
     return this.connection.getRepository(type);
   }
 
-  getName(): string {
+  $getName(): string {
     return "ORM";
   }
 }

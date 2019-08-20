@@ -15,159 +15,203 @@ const helpers = {
   getURL: () => "https://site.com"
 };
 
-it("should GET a simple route", async () => {
-  const app = express();
-  const router = new ExpressRouter();
+describe("REST Requests", () => {
+  it("should GET a simple route", async () => {
+    const app = express();
+    const router = new ExpressRouter();
 
-  const instance = {
+    const instance = {
+      doAction: jest.fn(() => {
+        return { name: "John Doe" };
+      })
+    };
+
+    router.$receiveMetadata(instance, [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "get",
+        path: "/foo/bar",
+        methodName: "doAction",
+        target: instance.doAction
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app).get("/foo/bar");
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({ name: "John Doe" });
+  });
+  it("should handle GET path variables", async () => {
+    const app = express();
+    const router = new ExpressRouter();
+
+    const instance = {
+      doAction: jest.fn((id, flag) => {
+        return { id, name: "John Doe", flag };
+      })
+    };
+
+    router.$receiveMetadata(instance, [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "get",
+        path: "/foo/:id/bar/:flag",
+        methodName: "doAction",
+        target: instance.doAction
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app).get("/foo/1/bar/test");
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({ id: "1", name: "John Doe", flag: "test" });
+  });
+  it("should handle GET variables", async () => {
+    const app = express();
+    const router = new ExpressRouter();
+
+    const instance = {
+      doAction: jest.fn((id, params) => {
+        return { id, name: "John Doe", count: params.count };
+      })
+    };
+
+    router.$receiveMetadata(instance, [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "get",
+        path: "/foo/:id",
+        methodName: "doAction",
+        target: instance.doAction
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app).get("/foo/1?count=10");
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({ id: "1", name: "John Doe", count: "10" });
+  });
+  it("should provide the locals", async () => {
+    const app = express();
+    let lastReq = null;
+    app.use((req, res, next) => {
+      lastReq = req;
+      next();
+    });
+
+    const router = new ExpressRouter();
+
+    const instance = {
+      doAction: jest.fn((data, req) => {
+        expect(data).toEqual({});
+        expect(req).toEqual(lastReq);
+        return { name: "John Doe" };
+      })
+    };
+
+    router.$receiveMetadata(instance, [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "get",
+        path: "/foo/bar",
+        methodName: "doAction",
+        target: instance.doAction
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app).get("/foo/bar");
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({ name: "John Doe" });
+  });
+  it("POST should provide data from the body", async () => {
+    const app = express();
+    app.use(bodyParser.json());
+
+    const router = new ExpressRouter();
+
+    const instance = {
+      doAction: jest.fn(data => {
+        return data;
+      })
+    };
+
+    router.$receiveMetadata(instance, [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "post",
+        path: "/foo/bar",
+        methodName: "doAction",
+        target: instance.doAction
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/foo/bar")
+      .send({ name: "John Doe" });
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({ name: "John Doe" });
+  });
+});
+
+describe("CORS", () => {
+  const sampleController = {
     doAction: jest.fn(() => {
       return { name: "John Doe" };
     })
   };
 
-  router.receiveMetadata(instance, [
+  const sampleRoute = [
     {
       name: "instance.doAction",
       type: "web",
       method: "get",
       path: "/foo/bar",
       methodName: "doAction",
-      target: instance.doAction
+      target: sampleController.doAction
     }
-  ]);
+  ];
 
-  router.integrate(app, helpers);
-  const result = await supertest(app).get("/foo/bar");
+  it("should return default CORS headers", async () => {
+    const app = express();
+    const router = new ExpressRouter();
+    router.$receiveMetadata(sampleController, sampleRoute);
+    router.$integrate(app, helpers);
+    const result = await supertest(app).get("/foo/bar");
 
-  // @ts-ignore
-  expect(result.statusCode).toBe(200);
-  expect(result.body).toEqual({ name: "John Doe" });
-});
-
-it("should handle GET path variables", async () => {
-  const app = express();
-  const router = new ExpressRouter();
-
-  const instance = {
-    doAction: jest.fn((id, flag) => {
-      return { id, name: "John Doe", flag };
-    })
-  };
-
-  router.receiveMetadata(instance, [
-    {
-      name: "instance.doAction",
-      type: "web",
-      method: "get",
-      path: "/foo/:id/bar/:flag",
-      methodName: "doAction",
-      target: instance.doAction
-    }
-  ]);
-
-  router.integrate(app, helpers);
-  const result = await supertest(app).get("/foo/1/bar/test");
-
-  // @ts-ignore
-  expect(result.statusCode).toBe(200);
-  expect(result.body).toEqual({ id: "1", name: "John Doe", flag: "test" });
-});
-
-it("should handle GET variables", async () => {
-  const app = express();
-  const router = new ExpressRouter();
-
-  const instance = {
-    doAction: jest.fn((id, params) => {
-      return { id, name: "John Doe", count: params.count };
-    })
-  };
-
-  router.receiveMetadata(instance, [
-    {
-      name: "instance.doAction",
-      type: "web",
-      method: "get",
-      path: "/foo/:id",
-      methodName: "doAction",
-      target: instance.doAction
-    }
-  ]);
-
-  router.integrate(app, helpers);
-  const result = await supertest(app).get("/foo/1?count=10");
-
-  // @ts-ignore
-  expect(result.statusCode).toBe(200);
-  expect(result.body).toEqual({ id: "1", name: "John Doe", count: "10" });
-});
-
-it("should provide the locals", async () => {
-  const app = express();
-  let lastReq = null;
-  app.use((req, res, next) => {
-    lastReq = req;
-    next();
+    // @ts-ignore
+    expect(result.header["access-control-allow-origin"]).toEqual("*");
   });
+  it("should allow a specific website", async () => {
+    const app = express();
+    const router = new ExpressRouter({
+      cors: {
+        origin: "https://authorizedwebsite.com"
+      }
+    });
 
-  const router = new ExpressRouter();
+    router.$receiveMetadata(sampleController, sampleRoute);
+    router.$integrate(app, helpers);
+    const result = await supertest(app).get("/foo/bar");
 
-  const instance = {
-    doAction: jest.fn((data, req) => {
-      expect(data).toEqual({});
-      expect(req).toEqual(lastReq);
-      return { name: "John Doe" };
-    })
-  };
-
-  router.receiveMetadata(instance, [
-    {
-      name: "instance.doAction",
-      type: "web",
-      method: "get",
-      path: "/foo/bar",
-      methodName: "doAction",
-      target: instance.doAction
-    }
-  ]);
-
-  router.integrate(app, helpers);
-  const result = await supertest(app).get("/foo/bar");
-
-  // @ts-ignore
-  expect(result.statusCode).toBe(200);
-  expect(result.body).toEqual({ name: "John Doe" });
-});
-
-it("POST should provide data from the body", async () => {
-  const app = express();
-  app.use(bodyParser.json());
-
-  const router = new ExpressRouter();
-
-  const instance = {
-    doAction: jest.fn(data => {
-      return data;
-    })
-  };
-
-  router.receiveMetadata(instance, [
-    {
-      name: "instance.doAction",
-      type: "web",
-      method: "post",
-      path: "/foo/bar",
-      methodName: "doAction",
-      target: instance.doAction
-    }
-  ]);
-
-  router.integrate(app, helpers);
-  const result = await supertest(app)
-    .post("/foo/bar")
-    .send({ name: "John Doe" });
-
-  // @ts-ignore
-  expect(result.statusCode).toBe(200);
-  expect(result.body).toEqual({ name: "John Doe" });
+    expect(result.header["access-control-allow-origin"]).toEqual(
+      "https://authorizedwebsite.com"
+    );
+  });
 });
