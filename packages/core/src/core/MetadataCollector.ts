@@ -1,6 +1,6 @@
 export type Metadata<TType extends string = string, T extends object = {}> = {
   type: TType;
-  target: Function;
+  class: Function;
   methodName: string;
   [prop: string]: any;
 } & T;
@@ -18,7 +18,9 @@ class MetadataCollector {
   }
 
   getMetadataForObject(object): Metadata[] {
-    return this.metadata.filter(data => data.target === object.constructor);
+    return this.metadata.filter(data => {
+      return data.class === object.constructor;
+    });
   }
 
   clear() {

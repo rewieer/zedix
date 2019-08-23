@@ -9,7 +9,7 @@ beforeEach(() => {
 
 function DummyFunction() {}
 
-it("should add the query to the metadata collector", () => {
+it.only("should add the query to the metadata collector", () => {
   const dummyObj = new DummyFunction();
 
   Web({
@@ -20,11 +20,12 @@ it("should add the query to the metadata collector", () => {
   expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
     {
       type: "web",
-      target: DummyFunction,
+      class: DummyFunction,
       methodName: "fooMethod",
       path: "/foo/bar",
       name: "createUser",
-      method: "GET"
+      method: "GET",
+      raw: false
     }
   ]);
 });

@@ -1,11 +1,14 @@
 import MetadataCollector, { Metadata } from "../core/MetadataCollector";
 
-export type WebMetadata = Metadata<"web", {
-  name: string;
-  path: string;
-  method: string;
-  raw?: boolean;
-}>
+export type WebMetadata = Metadata<
+  "web",
+  {
+    name: string;
+    path: string;
+    method: string;
+    raw?: boolean;
+  }
+>;
 
 /**
  * Represent a Web Query
@@ -18,15 +21,15 @@ export default function Web(params: {
   method: string;
   raw?: boolean;
 }) {
-  return function(target, method) {
+  return function(instance, method) {
     MetadataCollector.add<WebMetadata>({
       type: "web",
-      target: target.constructor,
+      class: instance.constructor,
       methodName: method,
       name: params.name,
       path: params.path,
       method: params.method,
-      raw: params.raw
+      raw: params.raw || false
     });
   };
 }

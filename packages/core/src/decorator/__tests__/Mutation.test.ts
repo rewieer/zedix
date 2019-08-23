@@ -16,7 +16,7 @@ it("should add the mutation to the metadata collector", () => {
   expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
     {
       type: "mutation",
-      target: DummyFunction,
+      class: DummyFunction,
       methodName: "fooMethod",
       name: "foo"
     }

@@ -8,14 +8,15 @@ import chalk from "chalk";
 import RouterInterface from "../interface/RouterInterface";
 import { AppHelpers, StringMap } from "../types";
 import LoggerInterface from "../service/LoggerInterface";
-import {UnionMetadata} from "../decorator/decoratorTypes";
-import HookHelper from "../core/HookHelper";
+import { UnionMetadata } from "../decorator/decoratorTypes";
+import HookHelper from "../hook/HookHelper";
+import Request from "../core/Request";
 
 const argRegex = /:(\w*)/g;
 
 type Route = {
-  target: object;
-  targetMethodName: string;
+  instance: object;
+  methodName: string;
   path: string;
   method: string;
   params: any[] | null;
@@ -51,8 +52,8 @@ class ExpressRouter implements RouterInterface {
         }
 
         this.routes[metadata.name] = {
-          target: instance,
-          targetMethodName: metadata.methodName,
+          instance,
+          methodName: metadata.methodName,
           path: metadata.path,
           method,
           params,
@@ -89,25 +90,40 @@ class ExpressRouter implements RouterInterface {
         : bodyParser.json({ limit: "10mb" });
 
       app[route.method](route.path, bodyParserMiddleware, async (req, res) => {
-        let params = [];
-        let data;
+        const request = new Request(req, res);
+
+        let routeParams = null;
         if (route.method === "get" && route.params) {
-          params = route.params.map(name => req.params[name]);
+          routeParams = {};
+          for (let key of route.params) {
+            routeParams[key] = req.params[key];
+          }
         }
 
-        if (route.method !== "get") {
-          data = req.body;
-        } else {
-          data = req.query;
-        }
+        let meta: Record<string, any> = {
+          routeParams
+        };
 
-        data = HookHelper.passThrough("request", route.target, route.targetMethodName, data);
-        params.push(data);
-        params.push(req);
-        params.push(res);
+        request.setMeta(meta);
+        request.setData(route.method !== "get" ? req.body : req.query);
+
+        HookHelper.passThrough(
+          "request",
+          route.instance,
+          route.methodName,
+          request
+        );
 
         logRequest(this.helpers.getLogger(), req, res);
-        const result = await route.target[route.targetMethodName](...params);
+        const result = await route.instance[route.methodName]({
+          data: request.getData(),
+          meta: request.getMeta(),
+          request: request.getRequest(),
+          response: request.getResponse(),
+          context: request.getContext()
+          // TODO : provide a render() method to return a template
+        });
+
         if (result) {
           // Currently we allow to render templates by returning a custom object
           // containing key __zxtpl__.

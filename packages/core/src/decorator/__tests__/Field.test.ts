@@ -16,7 +16,7 @@ it("should add the field to the metadata collector", () => {
   expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
     {
       type: "field",
-      target: DummyFunction,
+      class: DummyFunction,
       methodName: "fooMethod",
       entity: "User",
       field: "getName"

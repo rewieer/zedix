@@ -29,8 +29,8 @@ describe("Controller", () => {
         @Web({ name: "myWebController", path: "/foo/bar", method: "GET" })
         getBar() {
           return {
-            foo: "bar",
-          }
+            foo: "bar"
+          };
         }
       }
 
@@ -38,12 +38,8 @@ describe("Controller", () => {
       const app = new AppClass();
       app.configure({
         logger,
-        controllers: [
-          new MyCtrl(),
-        ],
-        routers: [
-          new ExpressRouter()
-        ],
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
         middlewares: [],
         services: []
       });
@@ -51,14 +47,15 @@ describe("Controller", () => {
       const result = await supertest(app.server).get("/foo/bar");
       expect(result.body).toEqual({ foo: "bar" });
     });
-    it("Should call the web and pass data", async () => {
+    it("Should pass data", async () => {
       class MyCtrl implements ControllerInterface {
         @Web({ name: "myWebController", path: "/foo/bar", method: "POST" })
-        getBar(data) {
+        getBar({ data, meta }) {
           expect(data).toEqual({ user: 1 });
+          expect(meta).toEqual({ routeParams: null });
           return {
-            done: true,
-          }
+            done: true
+          };
         }
       }
 
@@ -66,24 +63,88 @@ describe("Controller", () => {
       const app = new AppClass();
       app.configure({
         logger,
-        controllers: [
-          new MyCtrl(),
-        ],
-        routers: [
-          new ExpressRouter()
-        ],
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
         middlewares: [],
         services: []
       });
 
-      const result = await supertest(app.server).post("/foo/bar").send({ user: 1 });
+      const result = await supertest(app.server)
+        .post("/foo/bar")
+        .send({ user: 1 });
+      expect(result.body).toEqual({ done: true });
+    });
+    it("Should pass query params", async () => {
+      class MyCtrl implements ControllerInterface {
+        @Web({ name: "myWebController", path: "/foo/bar", method: "GET" })
+        getBar({ data, meta }) {
+          expect(data).toEqual({
+            a: "1",
+            b: "2"
+          });
+          expect(meta).toEqual({
+            routeParams: null
+          });
+
+          return {
+            done: true
+          };
+        }
+      }
+
+      const logger = createTestLogger();
+      const app = new AppClass();
+      app.configure({
+        logger,
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
+        middlewares: [],
+        services: []
+      });
+
+      const result = await supertest(app.server).get("/foo/bar?a=1&b=2");
+      expect(result.body).toEqual({ done: true });
+    });
+    it("Should pass route params", async () => {
+      class MyCtrl implements ControllerInterface {
+        @Web({
+          name: "myWebController",
+          path: "/foo/bar/:id/:page",
+          method: "GET"
+        })
+        getBar({ data, meta }) {
+          expect(data).toEqual({});
+          expect(meta).toEqual({
+            routeParams: {
+              id: "1",
+              page: "sometest"
+            }
+          });
+
+          return {
+            done: true
+          };
+        }
+      }
+
+      const logger = createTestLogger();
+      const app = new AppClass();
+      app.configure({
+        logger,
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
+        middlewares: [],
+        services: []
+      });
+
+      const result = await supertest(app.server).get("/foo/bar/1/sometest");
       expect(result.body).toEqual({ done: true });
     });
   });
   describe("Hook", () => {
     it("Should call the hook", async () => {
-      const hook = jest.fn((data) => {
-        expect(data).toEqual({ user: 1 });
+      const hook = jest.fn(obj => {
+        expect(obj.getData()).toEqual({ user: 1 });
       });
 
       class MyCtrl implements ControllerInterface {
@@ -91,59 +152,55 @@ describe("Controller", () => {
         @Web({ name: "myWebController", path: "/foo/bar", method: "POST" })
         getBar() {
           return {
-            done: true,
-          }
+            done: true
+          };
         }
       }
 
       const app = new AppClass();
       app.configure({
         logger: createTestLogger(),
-        controllers: [
-          new MyCtrl(),
-        ],
-        routers: [
-          new ExpressRouter()
-        ],
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
         middlewares: [],
         services: []
       });
 
-      const result = await supertest(app.server).post("/foo/bar").send({ user: 1 });
+      const result = await supertest(app.server)
+        .post("/foo/bar")
+        .send({ user: 1 });
       expect(result.body).toEqual({ done: true });
       expect(hook).toHaveBeenCalled();
     });
     it("Should call the hook and update data", async () => {
-      const hook = jest.fn((data) => {
-        expect(data).toEqual({ user: 1 });
-        return { user: 2 };
+      const hook = jest.fn(request => {
+        expect(request.getData()).toEqual({ user: 1 });
+        request.setData({ user: 2 });
       });
 
       class MyCtrl implements ControllerInterface {
         @Hook({ name: "request", action: hook })
         @Web({ name: "myWebController", path: "/foo/bar", method: "POST" })
-        getBar(data) {
-          return data
+        getBar({ data }) {
+          return data;
         }
       }
 
       const app = new AppClass();
       app.configure({
         logger: createTestLogger(),
-        controllers: [
-          new MyCtrl(),
-        ],
-        routers: [
-          new ExpressRouter()
-        ],
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
         middlewares: [],
         services: []
       });
 
-      const result = await supertest(app.server).post("/foo/bar").send({ user: 1 });
+      const result = await supertest(app.server)
+        .post("/foo/bar")
+        .send({ user: 1 });
       expect(result.body).toEqual({ user: 2 });
     });
-  })
+  });
 });
 
 describe("Services", () => {

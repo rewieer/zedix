@@ -3,13 +3,28 @@ import * as glob from "glob";
 
 import { mergeTypes } from "merge-graphql-schemas";
 import { ApolloServer, Config } from "apollo-server-express";
+import { GraphQLScalarType } from "graphql";
+import { GraphQLExtension } from "graphql-extensions";
 
 import RouterInterface from "../interface/RouterInterface";
 import { Metadata } from "../core/MetadataCollector";
-import { GraphQLExtension } from "graphql-extensions";
-import { GraphQLScalarType, print } from "graphql";
 import { AppHelpers } from "../types";
 import LoggerInterface from "../service/LoggerInterface";
+import { QueryMetadata } from "../decorator/Query";
+import { MutationMetadata } from "../decorator/Mutation";
+import { FieldMetadata } from "../decorator/Field";
+import Request from "../core/Request";
+import RequestContext from "../core/RequestContext";
+
+type CallableArguments = {
+  request: express.Request;
+  response: express.Response;
+  context: RequestContext;
+  data: any;
+  meta: any;
+  info: any;
+  parent: any;
+};
 
 class LogExtension<TContext = any> implements GraphQLExtension<TContext> {
   private startTime: number;
@@ -59,10 +74,15 @@ type RouterConfig = Config & {
   types?: { [key: string]: GraphQLScalarType };
 };
 
+type Instance = object;
+type QueryDefinition = QueryMetadata & { instance: Instance };
+type MutationDefinition = MutationMetadata & { instance: Instance };
+type FieldDefinition = FieldMetadata & { instance: Instance };
+
 class GraphQLRouter implements RouterInterface {
-  private queries = [];
-  private mutations = [];
-  private fields = {};
+  private queries: QueryDefinition[] = [];
+  private mutations: MutationDefinition[] = [];
+  private fields: Record<string, Record<string, FieldDefinition>> = {};
   private typedefs = [];
   private server: ApolloServer;
   private config: RouterConfig;
@@ -83,31 +103,31 @@ class GraphQLRouter implements RouterInterface {
     for (let data of metadata) {
       if (data.type === "query") {
         this.queries.push({
-          ...data,
+          ...(data as QueryMetadata),
           instance
         });
       } else if (data.type === "mutation") {
         this.mutations.push({
-          ...data,
+          ...(data as MutationMetadata),
           instance
         });
       } else if (data.type === "field") {
-        if (!this.fields[data.entity]) {
-          this.fields[data.entity] = {};
+        if (!this.fields[data.entity as string]) {
+          this.fields[data.entity as string] = {};
         }
 
         this.fields[data.entity][data.field] = {
           ...data,
           instance
-        };
+        } as any;
       }
     }
   }
 
   $integrate(app: express.Application, helpers: AppHelpers) {
     const logExtensionFactory = () => new LogExtension(helpers.getLogger());
-    const getAppFromContext = ({ res }) => {
-      return res.locals.app;
+    const getAppFromContext = ({ req, res }) => {
+      return new Request(req, res);
     };
 
     const conf = this.config;
@@ -132,34 +152,33 @@ class GraphQLRouter implements RouterInterface {
     });
   }
 
+  private createCaller(
+    obj: QueryDefinition | MutationDefinition | FieldDefinition
+  ) {
+    return (parent, args, request: Request, info) => {
+      request.setData(args);
+      return this.callInstance(obj.instance, obj.methodName, {
+        data: request.getData(),
+        context: request.getContext(),
+        meta: request.getMeta(),
+        response: request.getResponse(),
+        request: request.getRequest(),
+        parent,
+        info
+      });
+    };
+  }
+
   private buildResolvers() {
     const queryHandlers = {};
     const mutationHandlers = {};
 
     this.queries.forEach(obj => {
-      queryHandlers[obj.name] = (parent, args, context, info) => {
-        return this.callInstance(
-          obj.instance,
-          obj.methodName,
-          parent,
-          args,
-          context,
-          info
-        );
-      };
+      queryHandlers[obj.name] = this.createCaller(obj);
     });
 
     this.mutations.forEach(obj => {
-      mutationHandlers[obj.name] = (parent, args, context, info) => {
-        return this.callInstance(
-          obj.instance,
-          obj.methodName,
-          parent,
-          args,
-          context,
-          info
-        );
-      };
+      mutationHandlers[obj.name] = this.createCaller(obj);
     });
 
     let resolvers: any = {};
@@ -196,16 +215,7 @@ class GraphQLRouter implements RouterInterface {
 
       Object.keys(data).forEach(fieldName => {
         const data = this.fields[key][fieldName];
-        types[key][fieldName] = (entity, args, context, info) => {
-          return this.callFieldResolver(
-            data.instance,
-            data.methodName,
-            entity,
-            args,
-            context,
-            info
-          );
-        };
+        types[key][fieldName] = this.createCaller(data);
       });
     });
 
@@ -215,12 +225,15 @@ class GraphQLRouter implements RouterInterface {
     };
   }
 
-  private callInstance(instance, method, parent, args, context, info) {
-    return instance[method](args, context, info, parent);
-  }
-
-  private callFieldResolver(instance, method, entity, args, context, info) {
-    return instance[method](entity, args, context, info);
+  private callInstance(instance, method, args: CallableArguments) {
+    return instance[method]({
+      data: args.data,
+      meta: args.meta,
+      request: args.request,
+      response: args.response,
+      parent: args.parent,
+      info: args.info
+    });
   }
 }
 

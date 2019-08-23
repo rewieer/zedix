@@ -16,7 +16,7 @@ it("should add the query to the metadata collector", () => {
   expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
     {
       type: "query",
-      target: DummyFunction,
+      class: DummyFunction,
       methodName: "fooMethod",
       name: "foo"
     }

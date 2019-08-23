@@ -52,7 +52,7 @@ class App<TConfig extends object = {}> {
         instance.url = req.protocol + "://" + req.get("host");
       }
 
-      res.locals.app = new RequestContext();
+      res.locals.context = new RequestContext();
       next();
     });
   }
@@ -112,7 +112,7 @@ class App<TConfig extends object = {}> {
     // - Step 2 : configure middlewares
     conf.middlewares.forEach(mdw => {
       this.server.use((req, res, next) => {
-        mdw.handle(req, res.locals.app, next);
+        mdw.handle(req, res.locals.context, next);
       });
     });
 

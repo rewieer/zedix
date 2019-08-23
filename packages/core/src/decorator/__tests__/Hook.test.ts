@@ -15,16 +15,16 @@ it("should add the field to the metadata collector", () => {
 
   Hook({
     name: "request",
-    action,
+    action
   })(dummyObj, "fooMethod");
   expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
     {
       type: "hook",
-      target: DummyFunction,
+      class: DummyFunction,
       methodName: "fooMethod",
       config: {
         name: "request",
-        action,
+        action
       }
     }
   ]);
