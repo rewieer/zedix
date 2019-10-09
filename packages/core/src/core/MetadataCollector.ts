@@ -14,7 +14,8 @@ class MetadataCollector {
   metadata: Metadata[] = [];
 
   add<TMeta extends Metadata>(data: TMeta) {
-    this.metadata.push(data);
+    // decorators are readed bottom-up, so the last one to be readed is actually the first one the user reads
+    this.metadata.unshift(data);
   }
 
   getMetadataForObject(object): Metadata[] {

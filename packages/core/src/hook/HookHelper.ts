@@ -4,7 +4,7 @@ import Request from "../core/Request";
 
 class HookHelper {
   passThrough<TData = any>(
-    name: string,
+    type: string,
     object: any,
     methodName: string,
     request: Request<TData>
@@ -12,11 +12,12 @@ class HookHelper {
     const allMetadata = MetadataCollector.getMetadataForObject(
       object
     ) as UnionMetadata[];
+
     for (let metadata of allMetadata) {
       if (
         metadata.type === "hook" &&
         metadata.methodName === methodName &&
-        metadata.config.name === name
+        metadata.config.type === type
       ) {
         metadata.config.action(request);
       }

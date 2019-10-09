@@ -43,8 +43,7 @@ describe("HTTP Requests", () => {
     router.$integrate(app, helpers);
     const result = await supertest(app).get("/foo/bar");
 
-    // @ts-ignore
-    expect(result.statusCode).toBe(200);
+    expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ name: "John Doe" });
   });
   it("should handle GET route variables", async () => {
@@ -76,8 +75,7 @@ describe("HTTP Requests", () => {
     router.$integrate(app, helpers);
     const result = await supertest(app).get("/foo/1/bar/test");
 
-    // @ts-ignore
-    expect(result.statusCode).toBe(200);
+    expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ done: true });
   });
   it("should handle GET variables and route variables", async () => {
@@ -111,8 +109,7 @@ describe("HTTP Requests", () => {
     router.$integrate(app, helpers);
     const result = await supertest(app).get("/foo/1?count=10");
 
-    // @ts-ignore
-    expect(result.statusCode).toBe(200);
+    expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ done: true });
   });
   it("should pass context through locals", async () => {
@@ -149,8 +146,7 @@ describe("HTTP Requests", () => {
     router.$integrate(app, helpers);
     const result = await supertest(app).get("/foo/bar");
 
-    // @ts-ignore
-    expect(result.statusCode).toBe(200);
+    expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ done: true });
   });
   it("POST should provide data from the body", async () => {
@@ -182,14 +178,13 @@ describe("HTTP Requests", () => {
       .post("/foo/bar")
       .send({ name: "John Doe" });
 
-    // @ts-ignore
-    expect(result.statusCode).toBe(200);
+    expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ done: true });
   });
 });
 
 describe("Hooks", () => {
-  it("Should call the hook", async () => {
+  it("Should call the hook and get data", async () => {
     const app = express();
     const router = new ExpressRouter();
 
@@ -209,7 +204,7 @@ describe("Hooks", () => {
       class: Controller,
       config: {
         action: hook,
-        name: "request"
+        type: "request"
       }
     });
 
@@ -229,8 +224,7 @@ describe("Hooks", () => {
       .post("/foo/bar")
       .send({ user: 1 });
 
-    // @ts-ignore
-    expect(result.statusCode).toBe(200);
+    expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ name: "John Doe" });
     expect(hook).toHaveBeenCalled();
   });
@@ -261,7 +255,6 @@ describe("CORS", () => {
     router.$integrate(app, helpers);
     const result = await supertest(app).get("/foo/bar");
 
-    // @ts-ignore
     expect(result.header["access-control-allow-origin"]).toEqual("*");
   });
   it("should allow a specific website", async () => {

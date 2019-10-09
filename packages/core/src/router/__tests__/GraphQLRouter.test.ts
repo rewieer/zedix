@@ -3,6 +3,10 @@ import * as supertest from "supertest";
 import * as path from "path";
 
 import GraphQLRouter from "../GraphQLRouter";
+import {
+  addMutationToRouter, addQueryToRouter,
+  addRequestHook, createComplexControllerWithMetadata, createController,
+} from "../../testUtils/testUtils";
 
 const helpers = {
   getLogger: () => {
@@ -180,3 +184,183 @@ describe("Queries, Mutations and Fields", () => {
     });
   });
 });
+
+describe("Hooks", () => {
+  it("Should handle a query with hooks", async () => {
+    const app = express();
+    const router = new GraphQLRouter({
+      schemaPath
+    });
+
+    const Controller = createController(
+      ({ data }) => {
+        expect(data).toEqual({ id: "2" });
+        return {
+          id: 2,
+          name: "rewieer"
+        };
+      },
+    );
+
+    addQueryToRouter(
+      router,
+      new Controller(),
+      "author"
+    );
+
+    addRequestHook(request => {
+      expect(request.getData()).toEqual({ id: "1" });
+      request.setData({
+        id: "2",
+      });
+    }, Controller);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/graphql")
+      .send({
+        query: `
+        query {
+          author(id: 1) {
+            id
+            name
+          }
+        }
+    `
+      });
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({
+      data: {
+        author: {
+          id: "2",
+          name: "rewieer"
+        }
+      }
+    });
+  })
+  it("Should handle a mutation with hooks", async () => {
+    const app = express();
+    const router = new GraphQLRouter({
+      schemaPath
+    });
+
+    const Controller = createController(
+      ({ data }) => {
+        expect(data).toEqual({ id: "1", name: "rewieer" });
+        return {
+          id: 1,
+          name: "rewieer"
+        };
+      });
+
+    addMutationToRouter(
+      router,
+      new Controller(),
+      "updateAuthor",
+    );
+
+    addRequestHook(request => {
+      expect(request.getData()).toEqual({
+        id: "1",
+        name: "john doe",
+      });
+      request.setData({
+        id: "1",
+        name: "rewieer",
+      });
+    }, Controller);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/graphql")
+      .send({
+        query: `
+        mutation {
+          updateAuthor(id: 1, name: "john doe") {
+            id
+            name
+          }
+        }
+    `
+      });
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({
+      data: {
+        updateAuthor: {
+          id: "1",
+          name: "rewieer"
+        }
+      }
+    });  });
+  it("Should handle a query + field with hooks", async () => {
+    const app = express();
+    const router = new GraphQLRouter({
+      schemaPath
+    });
+
+    const controller = createComplexControllerWithMetadata({
+        authorQuery: {
+          type: "query",
+          name: "author",
+          hooks: [
+            {
+              type: "request",
+              callback: request => {
+                expect(request.getData()).toEqual({ id: "1" });
+                request.setData({
+                  id: "2",
+                })
+              },
+            }
+          ],
+          callback: ({ data }) => {
+            expect(data).toEqual({ id: "2" });
+            return {
+              id: 2,
+              name: "rewieer"
+            };
+          },
+        },
+        authorNameField: {
+          type: "field",
+          field: "name",
+          entity: "Author",
+          callback: ({ parent }) => {
+            expect(parent).toEqual({ id: 2, name: "rewieer" });
+            return "john doe";
+          }
+        },
+      },
+      router,
+    );
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/graphql")
+      .send({
+        query: `
+        query {
+          author(id: 1) {
+            id
+            name
+          }
+        }
+    `
+      });
+
+    // @ts-ignore
+    expect(result.statusCode).toBe(200);
+    expect(result.body).toEqual({
+      data: {
+        author: {
+          id: "2",
+          name: "john doe"
+        }
+      }
+    });
+  });
+})

@@ -2,7 +2,7 @@ import MetadataCollector, { Metadata } from "../core/MetadataCollector";
 import Request from "../core/Request";
 
 export type HookConfig<TData = any> = {
-  name: string;
+  type: string;
   action: (request: Request<TData>, event?: any) => any;
 };
 

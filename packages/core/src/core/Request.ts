@@ -2,11 +2,11 @@ import * as express from "express";
 import RequestContext from "./RequestContext";
 
 class Request<TData = any, TMeta = any> {
-  private data: TData;
-  private meta: TMeta;
-  private context: RequestContext;
-  private request: express.Request;
-  private response: express.Response;
+  public data: TData; // Actual data received from the request
+  public meta: TMeta; // Any additional data provided by routers, hooks...
+  public context: RequestContext; // Contextual data about the request
+  public request: express.Request; // Original request
+  public response: express.Response; // Original response
 
   constructor(request: express.Request, response: express.Response) {
     this.request = request;

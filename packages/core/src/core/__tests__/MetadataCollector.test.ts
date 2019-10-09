@@ -24,3 +24,30 @@ it("should add the query to the metadata collector", () => {
     }
   ]);
 });
+
+it("should add the query to the metadata collector in reverse order", () => {
+  const dummyObj = new DummyFunction();
+  MetadataCollector.add({
+    type: "test",
+    class: DummyFunction,
+    methodName: "doX"
+  });
+  MetadataCollector.add({
+    type: "test",
+    class: DummyFunction,
+    methodName: "doY"
+  });
+
+  expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
+    {
+      type: "test",
+      class: DummyFunction,
+      methodName: "doY"
+    },
+    {
+      type: "test",
+      class: DummyFunction,
+      methodName: "doX"
+    }
+  ]);
+});

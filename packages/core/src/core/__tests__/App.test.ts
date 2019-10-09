@@ -1,4 +1,4 @@
-import { AppClass, ServiceClass } from "../App";
+import { AppClass } from "../App";
 import createTestLogger from "../../testUtils/createTestLogger";
 import BaseService from "../../service/BaseService";
 import * as supertest from "supertest";
@@ -148,7 +148,7 @@ describe("Controller", () => {
       });
 
       class MyCtrl implements ControllerInterface {
-        @Hook({ name: "request", action: hook })
+        @Hook({ type: "request", action: hook })
         @Web({ name: "myWebController", path: "/foo/bar", method: "POST" })
         getBar() {
           return {
@@ -179,7 +179,7 @@ describe("Controller", () => {
       });
 
       class MyCtrl implements ControllerInterface {
-        @Hook({ name: "request", action: hook })
+        @Hook({ type: "request", action: hook })
         @Web({ name: "myWebController", path: "/foo/bar", method: "POST" })
         getBar({ data }) {
           return data;
@@ -199,6 +199,44 @@ describe("Controller", () => {
         .post("/foo/bar")
         .send({ user: 1 });
       expect(result.body).toEqual({ user: 2 });
+    });
+    it("Should call the hooks in order and update data", async () => {
+      const hookA = jest.fn(request => {
+        expect(request.getData()).toEqual({ user: 1 });
+        request.setData({ user: 2 });
+      });
+      const hookB = jest.fn(request => {
+        expect(request.getData()).toEqual({ user: 2 });
+        request.setData({ user: 3 });
+      });
+      const hookC = jest.fn(request => {
+        expect(request.getData()).toEqual({ user: 3 });
+        request.setData({ user: 5 });
+      });
+
+      class MyCtrl implements ControllerInterface {
+        @Hook({ type: "request", action: hookA })
+        @Hook({ type: "request", action: hookB })
+        @Hook({ type: "request", action: hookC })
+        @Web({ name: "myWebController", path: "/foo/bar", method: "POST" })
+        getBar({ data }) {
+          return data;
+        }
+      }
+
+      const app = new AppClass();
+      app.configure({
+        logger: createTestLogger(),
+        controllers: [new MyCtrl()],
+        routers: [new ExpressRouter()],
+        middlewares: [],
+        services: []
+      });
+
+      const result = await supertest(app.server)
+        .post("/foo/bar")
+        .send({ user: 1 });
+      expect(result.body).toEqual({ user: 5 });
     });
   });
 });

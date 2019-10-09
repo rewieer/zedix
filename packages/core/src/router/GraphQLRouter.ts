@@ -15,6 +15,7 @@ import { MutationMetadata } from "../decorator/Mutation";
 import { FieldMetadata } from "../decorator/Field";
 import Request from "../core/Request";
 import RequestContext from "../core/RequestContext";
+import HookHelper from "../hook/HookHelper";
 
 type CallableArguments = {
   request: express.Request;
@@ -157,6 +158,13 @@ class GraphQLRouter implements RouterInterface {
   ) {
     return (parent, args, request: Request, info) => {
       request.setData(args);
+      HookHelper.passThrough(
+        "request",
+        obj.instance,
+        obj.methodName,
+        request
+      );
+
       return this.callInstance(obj.instance, obj.methodName, {
         data: request.getData(),
         context: request.getContext(),
