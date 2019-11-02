@@ -198,6 +198,7 @@ describe("Controller", () => {
       const result = await supertest(app.server)
         .post("/foo/bar")
         .send({ user: 1 });
+      
       expect(result.body).toEqual({ user: 2 });
     });
     it("Should call the hooks in order and update data", async () => {

@@ -14,7 +14,7 @@ it("should add the field to the metadata collector", () => {
   const action = jest.fn();
 
   Hook({
-    name: "request",
+    type: "request",
     action
   })(dummyObj, "fooMethod");
   expect(MetadataCollector.getMetadataForObject(dummyObj)).toEqual([
@@ -23,7 +23,7 @@ it("should add the field to the metadata collector", () => {
       class: DummyFunction,
       methodName: "fooMethod",
       config: {
-        name: "request",
+        type: "request",
         action
       }
     }
