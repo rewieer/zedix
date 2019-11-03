@@ -15,7 +15,7 @@ class HookHelper {
    * @param methodName the method that is being called
    * @param request the current HTTP request
    */
-  passThrough<TData = any>(
+  async passThrough<TData = any>(
     type: string,
     instance: any,
     methodName: string,
@@ -31,7 +31,7 @@ class HookHelper {
         metadata.methodName === methodName &&
         metadata.config.type === type
       ) {
-        metadata.config.action(request);
+        await metadata.config.action(request);
       }
     }
   }

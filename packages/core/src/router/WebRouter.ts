@@ -11,6 +11,7 @@ import LoggerInterface from "../service/LoggerInterface";
 import { UnionMetadata } from "../decorator/decoratorTypes";
 import HookHelper from "../hook/HookHelper";
 import Request from "../core/Request";
+import RequestContext from "../core/RequestContext";
 
 const argRegex = /:(\w*)/g;
 
@@ -28,6 +29,14 @@ type Config = {
   views?: string;
   public?: string;
   cors?: CorsOptions | CorsOptionsDelegate;
+};
+
+export type WebRouteArgs<TData = any, TMeta = any> = {
+  data: TData;
+  meta: TMeta;
+  request: express.Request;
+  response: express.Response;
+  context: RequestContext;
 };
 
 /**
@@ -111,7 +120,7 @@ class WebRouter implements RouterInterface {
         request.setMeta(meta);
         request.setData(route.method !== "get" ? req.body : req.query);
 
-        HookHelper.passThrough(
+        await HookHelper.passThrough(
           "request",
           route.instance,
           route.methodName,
@@ -126,7 +135,7 @@ class WebRouter implements RouterInterface {
           response: request.getResponse(),
           context: request.getContext()
           // TODO : provide a render() method to return a template
-        });
+        } as WebRouteArgs);
 
         if (result) {
           // Currently we allow to render templates by returning a custom object

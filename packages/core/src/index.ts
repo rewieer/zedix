@@ -3,13 +3,14 @@ export { default as ORMService } from "./service/ORM";
 export { default as LoggerService } from "./service/Logger";
 export { default as MailerService } from "./service/Mailer";
 export { default as TemplatingService } from "./service/Templating";
-export { default as WebRouter } from "./router/WebRouter";
-export { default as GraphQLRouter } from "./router/GraphQLRouter";
+export { default as WebRouter, WebRouteArgs } from "./router/WebRouter";
+export { default as GraphQLRouter, GraphQLRouteArgs } from "./router/GraphQLRouter";
 export { default as Field } from "./decorator/Field";
 export { default as Mutation } from "./decorator/Mutation";
 export { default as Query } from "./decorator/Query";
 export { default as Web } from "./decorator/Web";
 export { default as RequestContext } from "./core/RequestContext";
+export { default as Request } from "./core/Request";
 export {
   default as ControllerInterface
 } from "./interface/ControllerInterface";

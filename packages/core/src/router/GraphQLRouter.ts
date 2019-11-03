@@ -17,12 +17,12 @@ import Request from "../core/Request";
 import RequestContext from "../core/RequestContext";
 import HookHelper from "../hook/HookHelper";
 
-type CallableArguments = {
+export type GraphQLRouteArgs<TData = any, TMeta = any> = {
   request: express.Request;
   response: express.Response;
   context: RequestContext;
-  data: any;
-  meta: any;
+  data: TData;
+  meta: TMeta;
   info: any;
   parent: any;
 };
@@ -156,9 +156,9 @@ class GraphQLRouter implements RouterInterface {
   private createCaller(
     obj: QueryDefinition | MutationDefinition | FieldDefinition
   ) {
-    return (parent, args, request: Request, info) => {
+    return async (parent, args, request: Request, info) => {
       request.setData(args);
-      HookHelper.passThrough(
+      await HookHelper.passThrough(
         "request",
         obj.instance,
         obj.methodName,
@@ -233,14 +233,15 @@ class GraphQLRouter implements RouterInterface {
     };
   }
 
-  private callInstance(instance, method, args: CallableArguments) {
+  private callInstance(instance, method, args: GraphQLRouteArgs) {
     return instance[method]({
       data: args.data,
       meta: args.meta,
       request: args.request,
       response: args.response,
       parent: args.parent,
-      info: args.info
+      info: args.info,
+      context: args.context,
     });
   }
 }
