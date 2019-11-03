@@ -1,7 +1,7 @@
 import "jest";
 
 import Authenticator from "../Authenticator";
-import RequestContext from "../../core/RequestContext";
+import RequestContext from "../../../core/RequestContext";
 
 it("should authenticate the user", async () => {
   const context = new RequestContext();

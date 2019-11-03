@@ -7,7 +7,7 @@ import {
 } from "graphql";
 
 /**
- * Ensure the user has the role
+ * GraphQL directive that ensure the user has the role passed as a parameter.
  */
 export const createRequireRoleVisitor = (config: {
   getUser: (context: any) => any;

@@ -2,7 +2,7 @@ import * as express from "express";
 import * as supertest from "supertest";
 import * as bodyParser from "body-parser";
 
-import ExpressRouter from "../ExpressRouter";
+import WebRouter from "../WebRouter";
 import { UnionMetadata } from "../../decorator/decoratorTypes";
 import RequestContext from "../../core/RequestContext";
 import MetadataCollector from "../../core/MetadataCollector";
@@ -21,7 +21,7 @@ const helpers = {
 describe("HTTP Requests", () => {
   it("should GET a simple route", async () => {
     const app = express();
-    const router = new ExpressRouter();
+    const router = new WebRouter();
 
     function Controller() {
       this.doAction = jest.fn(() => {
@@ -48,7 +48,7 @@ describe("HTTP Requests", () => {
   });
   it("should handle GET route variables", async () => {
     const app = express();
-    const router = new ExpressRouter();
+    const router = new WebRouter();
 
     function Controller() {
       this.doAction = jest.fn(({ meta }) => {
@@ -80,7 +80,7 @@ describe("HTTP Requests", () => {
   });
   it("should handle GET variables and route variables", async () => {
     const app = express();
-    const router = new ExpressRouter();
+    const router = new WebRouter();
 
     function Controller() {
       this.doAction = jest.fn(({ data, meta }) => {
@@ -122,7 +122,7 @@ describe("HTTP Requests", () => {
       next();
     });
 
-    const router = new ExpressRouter();
+    const router = new WebRouter();
 
     function Controller() {
       this.doAction = jest.fn(({ data, request, context }) => {
@@ -153,7 +153,7 @@ describe("HTTP Requests", () => {
     const app = express();
     app.use(bodyParser.json());
 
-    const router = new ExpressRouter();
+    const router = new WebRouter();
 
     function Controller() {
       this.doAction = jest.fn(({ data }) => {
@@ -186,7 +186,7 @@ describe("HTTP Requests", () => {
 describe("Hooks", () => {
   it("Should call the hook and get data", async () => {
     const app = express();
-    const router = new ExpressRouter();
+    const router = new WebRouter();
 
     function Controller() {
       this.doAction = jest.fn(() => {
@@ -250,7 +250,7 @@ describe("CORS", () => {
 
   it("should return default CORS headers", async () => {
     const app = express();
-    const router = new ExpressRouter();
+    const router = new WebRouter();
     router.$receiveMetadata(new Controller(), sampleRoute);
     router.$integrate(app, helpers);
     const result = await supertest(app).get("/foo/bar");
@@ -259,7 +259,7 @@ describe("CORS", () => {
   });
   it("should allow a specific website", async () => {
     const app = express();
-    const router = new ExpressRouter({
+    const router = new WebRouter({
       cors: {
         origin: "https://authorizedwebsite.com"
       }

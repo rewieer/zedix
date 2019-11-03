@@ -2,7 +2,7 @@ import { SchemaDirectiveVisitor } from "graphql-tools";
 import { GraphQLField, GraphQLInterfaceType, GraphQLObjectType } from "graphql";
 
 /**
- * Authenticate the user, or throws an exception
+ * GraphQL directive that authenticate the user, or throws an exception
  * @param conf
  */
 export const createAuthenticatedVisitor = (conf: {

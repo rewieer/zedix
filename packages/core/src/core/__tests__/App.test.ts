@@ -2,7 +2,7 @@ import { AppClass } from "../App";
 import createTestLogger from "../../testUtils/createTestLogger";
 import BaseService from "../../service/BaseService";
 import * as supertest from "supertest";
-import ExpressRouter from "../../router/ExpressRouter";
+import WebRouter from "../../router/WebRouter";
 import ControllerInterface from "../../interface/ControllerInterface";
 import MiddlewareInterface from "../../interface/MiddlewareInterface";
 import RequestContext from "../RequestContext";
@@ -39,7 +39,7 @@ describe("Controller", () => {
       app.configure({
         logger,
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });
@@ -64,7 +64,7 @@ describe("Controller", () => {
       app.configure({
         logger,
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });
@@ -97,7 +97,7 @@ describe("Controller", () => {
       app.configure({
         logger,
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });
@@ -132,7 +132,7 @@ describe("Controller", () => {
       app.configure({
         logger,
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });
@@ -161,7 +161,7 @@ describe("Controller", () => {
       app.configure({
         logger: createTestLogger(),
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });
@@ -190,7 +190,7 @@ describe("Controller", () => {
       app.configure({
         logger: createTestLogger(),
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });
@@ -198,7 +198,7 @@ describe("Controller", () => {
       const result = await supertest(app.server)
         .post("/foo/bar")
         .send({ user: 1 });
-      
+
       expect(result.body).toEqual({ user: 2 });
     });
     it("Should call the hooks in order and update data", async () => {
@@ -229,7 +229,7 @@ describe("Controller", () => {
       app.configure({
         logger: createTestLogger(),
         controllers: [new MyCtrl()],
-        routers: [new ExpressRouter()],
+        routers: [new WebRouter()],
         middlewares: [],
         services: []
       });

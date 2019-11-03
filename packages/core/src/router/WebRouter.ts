@@ -30,7 +30,11 @@ type Config = {
   cors?: CorsOptions | CorsOptionsDelegate;
 };
 
-class ExpressRouter implements RouterInterface {
+/**
+ * @class WebRouter
+ * Router that exposes classic web routes with HTTP verbs.
+ */
+class WebRouter implements RouterInterface {
   private routes: StringMap<Route> = {};
   private config: Partial<Config>;
   private helpers: AppHelpers;
@@ -192,4 +196,4 @@ function logRequest(logger: LoggerInterface, req, res) {
   });
 }
 
-export default ExpressRouter;
+export default WebRouter;

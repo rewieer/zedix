@@ -4,11 +4,12 @@ import { SchemaDirectiveVisitor } from "graphql-tools";
 
 import MiddlewareInterface, {
   MiddlewareRequest
-} from "../interface/MiddlewareInterface";
-import RequestContext from "../core/RequestContext";
-import { createAuthenticatedVisitor } from "./authenticator/AuthenticatedVisitor";
-import { createRequireRoleVisitor } from "./authenticator/RequireRoleVisitor";
+} from "../../interface/MiddlewareInterface";
+import RequestContext from "../../core/RequestContext";
+import { createAuthenticatedVisitor } from "./AuthenticatedVisitor";
+import { createRequireRoleVisitor } from "./RequireRoleVisitor";
 
+// --- Types
 type AuthenticateFunction = (
   req: express.Request,
   context: RequestContext
@@ -19,12 +20,19 @@ type AuthenticatorConfig = {
   hasRole?: HasRoleFunction;
 };
 
+// --- Utils
 const isAuthenticatedFromContext = context => context.get("user") !== null;
 const getUserFromContext = context => context.get("user");
+const createUnauthenticatedError = () => new AuthenticationError("You must be authenticated.");
+const createUnauthorizedError = () => new Error("You must be authorized to access this data.");
 
 /**
  * @class Authenticator
- * Provide authentication mechanism to the framework
+ * Provide authentication mechanism to the framework.
+ * It appends a "user" property into the express context corresponding to the user currently logged in.
+ * It uses two functions :
+ * - authenticate : perform the actual authentication and must return a user. Is called async so can return a promise.
+ * - hasRole : verify if the user has the required role to perform the action.
  */
 class AuthenticatorBuilder {
   private readonly authenticate: AuthenticateFunction;
@@ -39,22 +47,25 @@ class AuthenticatorBuilder {
     return new AuthenticatorMiddleware(this.authenticate);
   }
 
+  /**
+   * Creates a GraphQL directive that asserts the user is authenticated.
+   */
   public toAuthenticatedDirective(): typeof SchemaDirectiveVisitor {
     return createAuthenticatedVisitor({
       isAuthenticated: isAuthenticatedFromContext,
-      unauthenticatedError: () =>
-        new AuthenticationError("You must be authenticated.")
+      unauthenticatedError: createUnauthenticatedError
     });
   }
 
+  /**
+   * Creates a GraphQL directive that asserts the user is authorized.
+   */
   public toRequireRoleDirective(): typeof SchemaDirectiveVisitor {
     return createRequireRoleVisitor({
       getUser: getUserFromContext,
       hasRole: this.hasRole,
-      unauthenticatedError: () =>
-        new AuthenticationError("You must be authenticated."),
-      authorizationError: () =>
-        new Error("You must be authorized to access this data.")
+      unauthenticatedError: createUnauthenticatedError,
+      authorizationError: createUnauthorizedError
     });
   }
 }
