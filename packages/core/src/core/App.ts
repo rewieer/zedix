@@ -33,7 +33,6 @@ type AppConfigureConf<TConfig extends object = {}> = {
  * Core class
  *
  * Service custom fields :
- * __zxcfgr__ : configurator. If provided, the app calls it in order to instantiate the object.
  */
 class App<TConfig extends object = {}> {
   public server: express.Application;
@@ -86,8 +85,9 @@ class App<TConfig extends object = {}> {
     for (let service of conf.services) {
       let serviceConf = service.$getConfiguration
         ? service.$getConfiguration(config)
-        : [config];
+        : config;
 
+      // @ts-ignore
       const instance = new service(serviceConf);
       if (this.services[instance.$getName()]) {
         throw new Error(

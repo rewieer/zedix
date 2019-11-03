@@ -14,14 +14,16 @@ jest.mock("nodemailer", () => {
 });
 
 it("should send a mail", async () => {
-  const mailer = new Mailer(
-    {
-      host: "test.com",
-      port: 123,
-      secure: false
-    },
-    {}
-  );
+  const mailer = new Mailer({
+    mailer: {
+      transport: {
+        host: "test.com",
+        port: 123,
+        secure: false
+      },
+      options: {}
+    }
+  });
 
   await mailer.send({
     from: "rewieer@gmail.com",

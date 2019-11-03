@@ -4,9 +4,9 @@ import BaseService from "./BaseService";
 class Mailer extends BaseService {
   public mailer: nodemailer.Transporter;
 
-  constructor(transport, options?) {
+  constructor(config, options?) {
     super();
-    this.mailer = nodemailer.createTransport(transport, options);
+    this.mailer = nodemailer.createTransport(config.mailer.transport, config.mailer.options);
   }
 
   send(options: nodemailer.SendMailOptions) {
