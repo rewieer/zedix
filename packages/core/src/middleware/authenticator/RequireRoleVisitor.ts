@@ -22,8 +22,8 @@ export const createRequireRoleVisitor = (config: {
     ): GraphQLField<any, any> | void | null {
       const { resolve = defaultFieldResolver } = field;
 
-      field.resolve = (root, args, context, info) => {
-        const user = config.getUser(context);
+      field.resolve = (root, args, request, info) => {
+        const user = config.getUser(request.context);
         if (!user) {
           throw config.unauthenticatedError();
         }
@@ -32,7 +32,7 @@ export const createRequireRoleVisitor = (config: {
           throw config.authorizationError();
         }
 
-        return resolve.call(this, root, args, context, info);
+        return resolve.call(this, root, args, request, info);
       };
     }
   };

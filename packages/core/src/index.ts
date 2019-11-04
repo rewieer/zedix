@@ -20,7 +20,7 @@ export {
 } from "./interface/MiddlewareInterface";
 export { default as RouterInterface } from "./interface/RouterInterface";
 export { default as BaseService } from "./service/BaseService";
-export { default as AuthenticatorBuilder } from "./middleware/authenticator/Authenticator";
+export { default as AuthenticatorBuilder, AuthenticateFunction, AuthenticatorConfig, HasRoleFunction } from "./middleware/authenticator/Authenticator";
 
 export { configurable } from "./helper";
 export default App;

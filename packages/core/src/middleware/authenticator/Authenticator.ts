@@ -10,12 +10,12 @@ import { createAuthenticatedVisitor } from "./AuthenticatedVisitor";
 import { createRequireRoleVisitor } from "./RequireRoleVisitor";
 
 // --- Types
-type AuthenticateFunction = (
+export type AuthenticateFunction = (
   req: express.Request,
   context: RequestContext
 ) => any;
-type HasRoleFunction = (user: any, role: string) => boolean;
-type AuthenticatorConfig = {
+export type HasRoleFunction = (user: any, role: string) => boolean;
+export type AuthenticatorConfig = {
   authenticate: AuthenticateFunction;
   hasRole?: HasRoleFunction;
 };

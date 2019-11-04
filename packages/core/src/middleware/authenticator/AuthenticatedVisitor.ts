@@ -15,10 +15,10 @@ export const createAuthenticatedVisitor = (conf: {
       details: { objectType: GraphQLObjectType | GraphQLInterfaceType }
     ): GraphQLField<any, any> | void | null {
       let previousResolve = field.resolve;
-      field.resolve = (parent, args, context, info) => {
-        if (!conf.isAuthenticated(context)) throw conf.unauthenticatedError();
+      field.resolve = (parent, args, request, info) => {
+        if (!conf.isAuthenticated(request.context)) throw conf.unauthenticatedError();
 
-        return previousResolve(parent, args, context, info);
+        return previousResolve(parent, args, request, info);
       };
     }
   };
