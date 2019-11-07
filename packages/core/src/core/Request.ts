@@ -1,16 +1,15 @@
 import * as express from "express";
 import RequestContext from "./RequestContext";
 
-class Request<TData = any, TMeta = any> {
+class Request<TData = any, TMeta = any, TResponse = any> {
   public data: TData; // Actual data received from the request
   public meta: TMeta; // Any additional data provided by routers, hooks...
   public context: RequestContext; // Contextual data about the request
   public request: express.Request; // Original request
-  public response: express.Response; // Original response
+  public response: TResponse; // Original response
 
   constructor(request: express.Request, response: express.Response) {
     this.request = request;
-    this.response = response;
     this.context = response.locals.context || new RequestContext();
   }
 
@@ -44,6 +43,10 @@ class Request<TData = any, TMeta = any> {
 
   getResponse() {
     return this.response;
+  }
+
+  setResponse(response: TResponse) {
+    this.response = response;
   }
 }
 

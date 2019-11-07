@@ -144,7 +144,6 @@ class WebRouter implements RouterInterface {
             data: request.getData(),
             meta: request.getMeta(),
             request: request.getRequest(),
-            response: request.getResponse(),
             context: request.getContext()
             // TODO : provide a render() method to return a template
           } as WebRouteArgs);
@@ -153,17 +152,28 @@ class WebRouter implements RouterInterface {
           return;
         }
 
-        if (result) {
-          // Currently we allow to render templates by returning a custom object
-          // containing key __zxtpl__.
-          // TODO : provide parameters into the Web MetaData to determine wether it's returning an object or a rendering path
-          if (result.__zxtpl__) {
-            res.render(result.name, result.params);
-            return;
-          }
-
-          res.send(result);
+        if (!result) {
+          res.send(null);
+          return;
         }
+
+        request.response = result;
+        await HookHelper.passThrough(
+          "response",
+          route.instance,
+          route.methodName,
+          request
+        );
+
+        // Currently we allow to render templates by returning a custom object
+        // containing key __zxtpl__.
+        // TODO : provide parameters into the Web MetaData to determine wether it's returning an object or a rendering path
+        if (result.__zxtpl__) {
+          res.render(result.name, result.params);
+          return;
+        }
+
+        res.send(request.response);
       });
     });
 

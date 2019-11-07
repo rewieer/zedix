@@ -4,7 +4,7 @@ import Request from "../core/Request";
 type HookAction<TData = any> = (request: Request<TData>, event?: any) => any;
 
 export type HookConfig<TData = any> = {
-  type: string;
+  type: string; // Supported : "request", "response"
   action: HookAction<TData>;
 };
 
@@ -16,13 +16,10 @@ export type HookMetadata<TData = any> = Metadata<
   }
 >;
 
-const mySymbol = Symbol("__classID__");
-
 export default function Hook(config: HookUserConfig) {
   return function(instance, method) {
     if (typeof config === "function") {
       // By default if only a function is provided, we consider it a request hook for convenience
-      // <rewieer 03/11/19> At this moment no other hook is supported anyway
       config = {
         type: "request",
         action: config
@@ -36,4 +33,18 @@ export default function Hook(config: HookUserConfig) {
       config
     });
   };
+}
+
+export function OnRequest(action: HookAction) {
+  return Hook({
+    type: "request",
+    action,
+  })
+}
+
+export function OnResponse(action: HookAction) {
+  return Hook({
+    type: "response",
+    action,
+  })
 }

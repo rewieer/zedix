@@ -9,6 +9,8 @@ export { default as Field } from "./decorator/Field";
 export { default as Mutation } from "./decorator/Mutation";
 export { default as Query } from "./decorator/Query";
 export { default as Web } from "./decorator/Web";
+export { default as Hook, OnRequest, OnResponse } from "./decorator/Hook";
+export { default as DefaultErrorHandler, HTTPError, ErrorHandlerInterface } from "./router/web/ErrorHandler";
 export { default as RequestContext } from "./core/RequestContext";
 export { default as Request } from "./core/Request";
 export {

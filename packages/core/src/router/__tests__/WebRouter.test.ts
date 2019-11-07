@@ -293,6 +293,51 @@ describe("Hooks", () => {
     expect(result.body).toEqual({ name: "John Doe" });
     expect(hook).toHaveBeenCalled();
   });
+  it("Should call the response hook to modify the response", async () => {
+    const app = express();
+    const router = new WebRouter();
+
+    function Controller() {
+      this.doAction = jest.fn(() => {
+        return { name: "John Doe" };
+      });
+    }
+
+    const hook = jest.fn(response => {
+      expect(response.getResponse()).toEqual({ name: "John Doe" });
+      response.setResponse({ name: "Jane Doe" })
+    });
+
+    MetadataCollector.add({
+      type: "hook" as any,
+      methodName: "doAction",
+      class: Controller,
+      config: {
+        action: hook,
+        type: "response"
+      }
+    });
+
+    router.$receiveMetadata(new Controller(), [
+      {
+        name: "instance.doAction",
+        type: "web" as any,
+        method: "post",
+        path: "/foo/bar",
+        methodName: "doAction",
+        class: Controller
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/foo/bar")
+      .send({ user: 1 });
+
+    expect((result as any).statusCode).toBe(200);
+    expect(result.body).toEqual({ name: "Jane Doe" });
+    expect(hook).toHaveBeenCalled();
+  });
 });
 
 describe("CORS", () => {
