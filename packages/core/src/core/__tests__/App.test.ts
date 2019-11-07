@@ -2,7 +2,7 @@ import { AppClass } from "../App";
 import createTestLogger from "../../testUtils/createTestLogger";
 import BaseService from "../../service/BaseService";
 import * as supertest from "supertest";
-import WebRouter from "../../router/WebRouter";
+import WebRouter from "../../router/web/WebRouter";
 import ControllerInterface from "../../interface/ControllerInterface";
 import MiddlewareInterface from "../../interface/MiddlewareInterface";
 import RequestContext from "../RequestContext";

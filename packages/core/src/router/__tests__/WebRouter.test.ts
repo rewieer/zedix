@@ -2,10 +2,11 @@ import * as express from "express";
 import * as supertest from "supertest";
 import * as bodyParser from "body-parser";
 
-import WebRouter from "../WebRouter";
+import WebRouter from "../web/WebRouter";
 import { UnionMetadata } from "../../decorator/decoratorTypes";
 import RequestContext from "../../core/RequestContext";
 import MetadataCollector from "../../core/MetadataCollector";
+import {HTTPError} from "../web/ErrorHandler";
 
 const helpers = {
   getLogger: () => {
@@ -151,8 +152,6 @@ describe("HTTP Requests", () => {
   });
   it("POST should provide data from the body", async () => {
     const app = express();
-    app.use(bodyParser.json());
-
     const router = new WebRouter();
 
     function Controller() {
@@ -180,6 +179,72 @@ describe("HTTP Requests", () => {
 
     expect((result as any).statusCode).toBe(200);
     expect(result.body).toEqual({ done: true });
+  });
+  it("Should return a standard JSON error", async () => {
+    const app = express();
+    const router = new WebRouter();
+
+    function Controller() {
+      this.doAction = jest.fn(({ data }) => {
+        throw new Error("Something bad happened");
+      });
+    }
+
+    router.$receiveMetadata(new Controller(), [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "post",
+        path: "/foo/bar",
+        methodName: "doAction",
+        class: Controller
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/foo/bar")
+      .send({ name: "John Doe" });
+
+    expect((result as any).statusCode).toBe(500);
+    expect(result.body).toEqual({
+      message: "Something bad happened",
+      code: 500,
+      payload: null,
+    });
+  });
+  it("Should return a complete HTTP error", async () => {
+    const app = express();
+    const router = new WebRouter();
+
+    function Controller() {
+      this.doAction = jest.fn(({ data }) => {
+        throw new HTTPError("Oh no", 400, { foo: "bar" });
+      });
+    }
+
+    router.$receiveMetadata(new Controller(), [
+      {
+        name: "instance.doAction",
+        type: "web",
+        method: "post",
+        path: "/foo/bar",
+        methodName: "doAction",
+        class: Controller
+      }
+    ]);
+
+    router.$integrate(app, helpers);
+    const result = await supertest(app)
+      .post("/foo/bar")
+      .send({ name: "John Doe" });
+
+    expect((result as any).statusCode).toBe(500);
+    expect(result.body).toEqual({
+      message: "Oh no",
+      code: 400,
+      payload: { foo: "bar" },
+    });
   });
 });
 

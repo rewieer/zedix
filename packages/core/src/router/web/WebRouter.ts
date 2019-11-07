@@ -5,13 +5,14 @@ import * as bodyParser from "body-parser";
 import { CorsOptions, CorsOptionsDelegate } from "cors";
 import chalk from "chalk";
 
-import RouterInterface from "../interface/RouterInterface";
-import { AppHelpers, StringMap } from "../types";
-import LoggerInterface from "../service/LoggerInterface";
-import { UnionMetadata } from "../decorator/decoratorTypes";
-import HookHelper from "../hook/HookHelper";
-import Request from "../core/Request";
-import RequestContext from "../core/RequestContext";
+import RouterInterface from "../../interface/RouterInterface";
+import { AppHelpers, StringMap } from "../../types";
+import LoggerInterface from "../../service/LoggerInterface";
+import { UnionMetadata } from "../../decorator/decoratorTypes";
+import HookHelper from "../../hook/HookHelper";
+import Request from "../../core/Request";
+import RequestContext from "../../core/RequestContext";
+import ErrorHandler, { ErrorHandlerInterface } from "./ErrorHandler";
 
 const argRegex = /:(\w*)/g;
 
@@ -29,6 +30,7 @@ type Config = {
   views?: string;
   public?: string;
   cors?: CorsOptions | CorsOptionsDelegate;
+  errorHandler?: ErrorHandlerInterface
 };
 
 export type WebRouteArgs<TData = any, TMeta = any> = {
@@ -48,8 +50,11 @@ class WebRouter implements RouterInterface {
   private config: Partial<Config>;
   private helpers: AppHelpers;
 
+  private errorHandler: ErrorHandlerInterface;
+
   constructor(config?: Config) {
     this.config = config || {};
+    this.errorHandler = config && config.errorHandler ? config.errorHandler : new ErrorHandler();
   }
 
   $receiveMetadata(instance: object, data: UnionMetadata[]) {
@@ -88,7 +93,6 @@ class WebRouter implements RouterInterface {
     }
 
     app.use(cors(this.config.cors));
-
     Object.keys(this.routes).forEach(key => {
       const route = this.routes[key];
       if (route.path.startsWith("/") === false) {
@@ -102,7 +106,7 @@ class WebRouter implements RouterInterface {
         ? bodyParser.raw({ type: "application/json" })
         : bodyParser.json({ limit: "10mb" });
 
-      app[route.method](route.path, bodyParserMiddleware, async (req, res) => {
+      app[route.method](route.path, bodyParserMiddleware, async (req, res, next) => {
         const request = new Request(req, res);
 
         let routeParams = null;
@@ -120,22 +124,34 @@ class WebRouter implements RouterInterface {
         request.setMeta(meta);
         request.setData(route.method !== "get" ? req.body : req.query);
 
-        await HookHelper.passThrough(
-          "request",
-          route.instance,
-          route.methodName,
-          request
-        );
+        try {
+          await HookHelper.passThrough(
+            "request",
+            route.instance,
+            route.methodName,
+            request
+          );
+        } catch (e) {
+          this.errorHandler.handle(e, req, res);
+          return;
+        }
 
         logRequest(this.helpers.getLogger(), req, res);
-        const result = await route.instance[route.methodName]({
-          data: request.getData(),
-          meta: request.getMeta(),
-          request: request.getRequest(),
-          response: request.getResponse(),
-          context: request.getContext()
-          // TODO : provide a render() method to return a template
-        } as WebRouteArgs);
+
+        let result = null;
+        try {
+          result = await route.instance[route.methodName]({
+            data: request.getData(),
+            meta: request.getMeta(),
+            request: request.getRequest(),
+            response: request.getResponse(),
+            context: request.getContext()
+            // TODO : provide a render() method to return a template
+          } as WebRouteArgs);
+        } catch (e) {
+          this.errorHandler.handle(e, req, res);
+          return;
+        }
 
         if (result) {
           // Currently we allow to render templates by returning a custom object
