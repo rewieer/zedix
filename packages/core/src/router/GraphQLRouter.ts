@@ -17,15 +17,16 @@ import Request from "../core/Request";
 import RequestContext from "../core/RequestContext";
 import HookHelper from "../hook/HookHelper";
 
-export type GraphQLRouteArgs<TData = any, TMeta = any> = {
+export type GraphQLRouteArgs<TData = any, TMeta = any, TParent = any> = {
   request: express.Request;
   response: express.Response;
   context: RequestContext;
   data: TData;
   meta: TMeta;
   info: any;
-  parent: any;
+  parent: TParent;
 };
+export type GraphQLFieldArgs<TParent = any, TData = any, TMeta = any> = GraphQLRouteArgs<TData, TMeta, TParent>;
 
 class LogExtension<TContext = any> implements GraphQLExtension<TContext> {
   private startTime: number;
