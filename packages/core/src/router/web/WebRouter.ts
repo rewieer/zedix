@@ -6,7 +6,7 @@ import { CorsOptions, CorsOptionsDelegate } from "cors";
 import chalk from "chalk";
 
 import RouterInterface from "../../interface/RouterInterface";
-import { AppHelpers, StringMap } from "../../types";
+import {AppHelpers, StringMap} from "../../types";
 import LoggerInterface from "../../service/LoggerInterface";
 import { UnionMetadata } from "../../decorator/decoratorTypes";
 import HookHelper from "../../hook/HookHelper";
@@ -15,6 +15,11 @@ import RequestContext from "../../core/RequestContext";
 import ErrorHandler, { ErrorHandlerInterface } from "./ErrorHandler";
 
 const argRegex = /:(\w*)/g;
+
+type OnError = (e: Error, req: Request) => any;
+type onResponse = (req: Request) => any;
+
+const noop = () => {};
 
 type Route = {
   instance: object;
@@ -31,6 +36,8 @@ type Config = {
   public?: string;
   cors?: CorsOptions | CorsOptionsDelegate;
   errorHandler?: ErrorHandlerInterface
+  onError?: OnError
+  onResponse?: onResponse
 };
 
 export type WebRouteArgs<TData = any, TMeta = any> = {
@@ -51,10 +58,14 @@ class WebRouter implements RouterInterface {
   private helpers: AppHelpers;
 
   private errorHandler: ErrorHandlerInterface;
+  private onError: OnError;
+  private onResponse: onResponse;
 
   constructor(config?: Config) {
     this.config = config || {};
     this.errorHandler = config && config.errorHandler ? config.errorHandler : new ErrorHandler();
+    this.onError = config.errorHandler || noop as any;
+    this.onResponse = config.onResponse || noop as any;
   }
 
   $receiveMetadata(instance: object, data: UnionMetadata[]) {
@@ -132,6 +143,7 @@ class WebRouter implements RouterInterface {
             request
           );
         } catch (e) {
+          this.onError(e, request);
           this.errorHandler.handle(e, req, res);
           return;
         }
@@ -148,6 +160,7 @@ class WebRouter implements RouterInterface {
             // TODO : provide a render() method to return a template
           } as WebRouteArgs);
         } catch (e) {
+          this.onError(e, request);
           this.errorHandler.handle(e, req, res);
           return;
         }
@@ -173,6 +186,7 @@ class WebRouter implements RouterInterface {
           return;
         }
 
+        this.onResponse(request);
         res.send(request.response);
       });
     });
