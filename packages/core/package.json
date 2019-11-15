@@ -1,6 +1,6 @@
 {
   "name": "zedix",
-  "version": "0.6.0-rc.1",
+  "version": "0.6.0-rc.2",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
