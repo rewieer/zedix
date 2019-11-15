@@ -135,18 +135,18 @@ class WebRouter implements RouterInterface {
         request.setMeta(meta);
         request.setData(route.method !== "get" ? req.body : req.query);
 
-        try {
-          await HookHelper.passThrough(
-            "request",
-            route.instance,
-            route.methodName,
-            request
-          );
-        } catch (e) {
-          this.onError(e, request);
-          this.errorHandler.handle(e, req, res);
-          return;
-        }
+        // try {
+        //   await HookHelper.passThrough(
+        //     "request",
+        //     route.instance,
+        //     route.methodName,
+        //     request
+        //   );
+        // } catch (e) {
+        //   this.onError(e, request);
+        //   this.errorHandler.handle(e, req, res);
+        //   return;
+        // }
 
         logRequest(this.helpers.getLogger(), req, res);
 

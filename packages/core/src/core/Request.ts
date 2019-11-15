@@ -48,6 +48,7 @@ class Request<TData = any, TMeta = any, TResponse = any> {
   setResponse(response: TResponse) {
     this.response = response;
   }
+
 }
 
 export default Request;

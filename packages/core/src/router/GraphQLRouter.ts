@@ -159,12 +159,12 @@ class GraphQLRouter implements RouterInterface {
   ) {
     return async (parent, args, request: Request, info) => {
       request.setData(args);
-      await HookHelper.passThrough(
-        "request",
-        obj.instance,
-        obj.methodName,
-        request
-      );
+      // await HookHelper.passThrough(
+      //   "request",
+      //   obj.instance,
+      //   obj.methodName,
+      //   request
+      // );
 
       return this.callInstance(obj.instance, obj.methodName, {
         data: request.getData(),
